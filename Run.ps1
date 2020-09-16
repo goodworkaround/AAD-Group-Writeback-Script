@@ -79,12 +79,14 @@ Foreach($ScopedGroup in $ScopedGroups) {
         $ADGroup = $ADGroupsMap[$ScopedGroup.Id]
         
         # Find members in AD, that should not be there, and remove them
-        $ADGroup.members | 
-            Where-Object {$_ -notin $ExpectedADMembers} |
-            ForEach-Object {
-                Write-Verbose "Removing member from AD group '$($ADGroup.displayName)': $($_)"
-                Remove-ADGroupMember -Identity $ADGroup.DistinguishedName -Members $_ -Confirm:$false
-            }
+        if($ADGroup.members) {
+            $ADGroup.members | 
+                Where-Object {$_ -notin $ExpectedADMembers} |
+                ForEach-Object {
+                    Write-Verbose "Removing member from AD group '$($ADGroup.displayName)': $($_)"
+                    Remove-ADGroupMember -Identity $ADGroup.DistinguishedName -Members $_ -Confirm:$false
+                }
+        }
         
         # Find members from Azure AD, that is not in AD, and add them
         $ExpectedADMembers |

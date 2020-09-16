@@ -77,7 +77,7 @@ function Ensure-ADGroup {
         Write-Verbose "Processing AADGroup '$($AADGroup.displayName)' ($($AADGroup.id))"
         if(!$ADGroupMap.Contains($AADGroup.id)) {
             Write-Verbose "Creating group '$($AADGroup.displayName)' in AD"
-            $ADGroupMap[$AADGroup.id] = New-ADGroup -Name $AADGroup.displayName -DisplayName $AADGroup.displayName -GroupScope Global -GroupCategory Security -Path $DestinationOU -Description $AADGroup.id # Todo - fix attribute
+            $ADGroupMap[$AADGroup.id] = New-ADGroup -Name $AADGroup.displayName -DisplayName $AADGroup.displayName -GroupScope Global -GroupCategory Security -Path $DestinationOU -OtherAttributes @{"$($ADGroupObjectIDAttribute)" = $AADGroup.id} | Get-ADGroup -Properties members,$ADGroupObjectIDAttribute,displayName,name
         } else {
             $ADGroup = $ADGroupMap[$AADGroup.id]
             if($AADGroup.displayName -ne $ADGroup.displayName) {
