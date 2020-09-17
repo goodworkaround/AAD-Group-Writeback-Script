@@ -37,6 +37,12 @@ if($JWT.Payload.roles -notcontains "Group.Read.All") {
     Write-Warning "Could not find Group.Read.All in access token roles. Things might not work as intended. Make sure you have the correct scopes added."
 } elseif($jwt.Payload.aud) {
     Write-Verbose "Successfully received access token"
+    Write-Verbose " - oid:             $($jwt.payload.oid)"
+    Write-Verbose " - aud:             $($jwt.payload.oid)"
+    Write-Verbose " - iss:             $($jwt.payload.iss)"
+    Write-Verbose " - appid:           $($jwt.payload.appid)"
+    Write-Verbose " - app_displayname: $($jwt.payload.app_displayname)"
+    Write-Verbose " - roles:           $($jwt.payload.roles)"
 } else {
     Write-Error "Someting went wrong when getting access token"
 }
@@ -48,6 +54,8 @@ if($Config.AADGroupScopingMethod -eq "PrivilegedGroups") {
     $ScopedGroups = Get-GraphRequestRecursive -Url 'https://graph.microsoft.com/v1.0/groups?$filter=isAssignableToRole eq true' -AccessToken $AccessToken
 } elseif($Config.AADGroupScopingMethod -eq "Filter") {
     $ScopedGroups = Get-GraphRequestRecursive -Url ('https://graph.microsoft.com/v1.0/groups?$filter={0}' -f $Config.AADGroupScopingFilter) -AccessToken $AccessToken
+} elseif($Config.AADGroupScopingMethod -eq "GroupMemberOfGroup") {
+    $ScopedGroups = Get-GraphRequestRecursive -Url ('https://graph.microsoft.com/v1.0/groups/{0}/members' -f $Config.AADGroupScopingFilter) -AccessToken $AccessToken
 } else {
     Write-Error "Unknown value for AADGroupScopingMethod: $($Config.AADGroupScopingMethod)" -ErrorAction Stop
 }
@@ -59,7 +67,7 @@ $ADGroupsMap = $ScopedGroups | Ensure-ADGroup -ADGroupObjectIDAttribute $Config.
 # Parse through all scoped groups, maintaining AD group memberships
 Write-Verbose "Processing all memberships"
 Foreach($ScopedGroup in $ScopedGroups) {
-    Write-Verbose "Processing group '$($ScopedGroup.displayName)' ($($ScopedGroup.id))"
+    Write-Verbose " - Processing group '$($ScopedGroup.displayName)' ($($ScopedGroup.id))"
     $Members = Get-GraphRequestRecursive -Url "https://graph.microsoft.com/v1.0/groups/$($ScopedGroup.id)/members?`$select=id,displayName,userPrincipalName,onPremisesDistinguishedName,onPremisesImmutableId" -AccessToken $AccessToken
     
     # Get all onPremisesDistinguishedName values from AAD, which should be our correct list
@@ -83,7 +91,7 @@ Foreach($ScopedGroup in $ScopedGroups) {
             $ADGroup.members | 
                 Where-Object {$_ -notin $ExpectedADMembers} |
                 ForEach-Object {
-                    Write-Verbose "Removing member from AD group '$($ADGroup.displayName)': $($_)"
+                    Write-Verbose "  - Removing member from AD group '$($ADGroup.displayName)': $($_)"
                     Remove-ADGroupMember -Identity $ADGroup.DistinguishedName -Members $_ -Confirm:$false
                 }
         }
@@ -92,7 +100,7 @@ Foreach($ScopedGroup in $ScopedGroups) {
         $ExpectedADMembers |
             Where-Object {$_ -notin $ADGroup.Members} |
             ForEach-Object {
-                Write-Verbose "Adding member to AD group '$($ADGroup.displayName)': $($_)"
+                Write-Verbose "  - Adding member to AD group '$($ADGroup.displayName)': $($_)"
                 Add-ADGroupMember -Identity $ADGroup.DistinguishedName -Members $_
             }
     } else {

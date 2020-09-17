@@ -74,19 +74,19 @@ function Ensure-ADGroup {
             }
     }
     Process {
-        Write-Verbose "Processing AADGroup '$($AADGroup.displayName)' ($($AADGroup.id))"
+        Write-Verbose " - Processing AADGroup '$($AADGroup.displayName)' ($($AADGroup.id))"
         if(!$ADGroupMap.Contains($AADGroup.id)) {
-            Write-Verbose "Creating group '$($AADGroup.displayName)' in AD"
+            Write-Verbose "  - Creating group '$($AADGroup.displayName)' in AD"
             $ADGroupMap[$AADGroup.id] = New-ADGroup -Name $AADGroup.displayName -DisplayName $AADGroup.displayName -GroupScope Global -GroupCategory Security -Path $DestinationOU -OtherAttributes @{"$($ADGroupObjectIDAttribute)" = $AADGroup.id} | Get-ADGroup -Properties members,$ADGroupObjectIDAttribute,displayName,name
         } else {
             $ADGroup = $ADGroupMap[$AADGroup.id]
             if($AADGroup.displayName -ne $ADGroup.displayName) {
-                Write-Verbose "Fixing displayname of AD group: '$($ADGroup.DisplayName)' -> $($AADGroup.displayName)"
+                Write-Verbose "  - Fixing displayname of AD group: '$($ADGroup.DisplayName)' -> $($AADGroup.displayName)"
                 $ADGroup | Set-ADGroup -DisplayName $AADGroup.displayName
             }
 
             if($AADGroup.displayName -ne $ADGroup.name) {
-                Write-Verbose "Fixing name of AD group: '$($ADGroup.name)' -> $($AADGroup.displayName)"
+                Write-Verbose "  - Fixing name of AD group: '$($ADGroup.name)' -> $($AADGroup.displayName)"
                 $ADGroup | Set-ADGroup -Name $AADGroup.displayName
             }
         }
