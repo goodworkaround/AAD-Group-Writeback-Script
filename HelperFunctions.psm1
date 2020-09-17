@@ -249,11 +249,11 @@ function Test-Configuration
                 Write-Warning "AuthenticationMethod 'MSI' does not need ClientID setting in config"
             }
 
-            if(!$Config.EncryptedSecret) {
+            if($Config.EncryptedSecret) {
                 Write-Warning "AuthenticationMethod 'MSI' does not need EncryptedSecret setting in config"
             }
 
-            if(!$Config.TenantID) {
+            if($Config.TenantID) {
                 Write-Warning "AuthenticationMethod 'MSI' does not need TenantID setting in config"
             }
         }
