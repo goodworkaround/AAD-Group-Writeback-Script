@@ -2,6 +2,12 @@
 
 This repository contains a script that can take certain groups in an Azure Active Directory, defined by a scope, writing them back to onpremises Active Directory, including group memberships.
 
+Use cases:
+- Use the Azure AD Privileged Groups functionality to control AD group memberships with Azure AD Privileged Identity Management (PIM), effectively being a replacement for MIM PAM
+- Use the Azure AD dynamic group functionality to dynamically assign group memberships in AD
+- Use the Azure AD Entitlement Management functionality to enable users to request access packages that provides AD group memberships
+- Use the Microsoft 365 Groups functionality to delegate group management, writing these groups back to AD to provide functionlity
+
 ## Setup
 
 - Download or clone this repository into a folder on one of your servers
