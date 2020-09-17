@@ -152,3 +152,13 @@ $url | Set-Clipboard
   - ClientID
   - EncryptedSecret
   - TenantID
+
+
+## Possible future release?
+
+PAM bastion forest support using the AD optional feature for PAM and msDS-ShadowPrincipal object types with support for time limited memberships. 
+
+```
+$of = get-ADOptionalFeature -filter "name -eq 'privileged access management feature'"
+Enable-ADOptionalFeature $of -scope ForestOrConfigurationSet -target "priv.contoso.local"
+```
