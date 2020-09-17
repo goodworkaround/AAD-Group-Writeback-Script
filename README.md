@@ -2,7 +2,8 @@
 
 This repository contains a script that can take certain groups in an Azure Active Directory, defined by a scope, writing them back to onpremises Active Directory, including group memberships.
 
-Use cases:
+## Use cases
+
 - Use the Azure AD Privileged Groups functionality to control AD group memberships with Azure AD Privileged Identity Management (PIM), effectively being a replacement for MIM PAM
 - Use the Azure AD dynamic group functionality to dynamically assign group memberships in AD
 - Use the Azure AD Entitlement Management functionality to enable users to request access packages that provides AD group memberships
@@ -101,7 +102,7 @@ New-AzureADServiceAppRoleAssignment -Id $groupReadAll.Id -PrincipalId $ObjectId 
 
 Now, in your config file, set AuthenticationMethod to "MSI". No need to provide ClientID, TenantID or EncryptedSecret.
 
-## Client Credentials
+### Client Credentials
 
 If you cannot use MSI, this is the way to go.
 
