@@ -96,3 +96,49 @@ Now, in your config file, set AuthenticationMethod to "MSI". No need to provide 
 
 If you cannot use MSI, this is the way to go.
 
+1. Register an app registration in your tenant using Azure AD PowerShell Module (You can change the app name)
+
+Make sure to run this in the context of the same user, as the same computer you will be running the write-back script on. This is due to the secure string handling :)
+
+```PowerShell
+$appName = "Any name"
+
+Install-Module AzureAD
+
+$requiredGrants = [Microsoft.Open.AzureAD.Model.RequiredResourceAccess]::new(
+    "00000003-0000-0000-c000-000000000000", # Microsoft Graph
+    @(
+        [Microsoft.Open.AzureAD.Model.ResourceAccess]::new("5b567255-7703-4780-807c-7be8301ae99b","Role") 
+        [Microsoft.Open.AzureAD.Model.ResourceAccess]::new("df021288-bdef-4463-88db-98f22de89214","Role") 
+    )
+)
+
+Write-Verbose "[Change] Creating the app registration '$appName'" -Verbose
+$app = New-AzureADApplication -DisplayName $appName -RequiredResourceAccess $requiredGrants
+$sp = New-AzureADServicePrincipal -AppId $app.appid
+$key = New-AzureADApplicationPasswordCredential -ObjectId $app.ObjectId -EndDate (get-date).AddYears(100)
+
+Write-Host -ForegroundColor DarkYellow "Config values:`n"
+Write-Host "AuthenticationMethod" -ForegroundColor Yellow
+Write-Host "ClientCredentials`n"
+
+Write-Host "ClientID" -ForegroundColor Yellow
+Write-Host "$($app.AppId)`n"
+
+Write-Host "EncryptedSecret" -ForegroundColor Yellow
+Write-Host "$($key.Value | ConvertTo-SecureString -AsPlainText -Force | ConvertFrom-SecureString)`n"
+
+Write-Host "TenantID" -ForegroundColor Yellow
+Write-Host "$((Get-AzureADCurrentSessionInfo).TenantId.ToString())`n"
+
+$url = "https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/CallAnAPI/appId/$($app.AppId)/isMSAApp/"
+Write-Verbose "Go to the url that already is put on the clipboard and click 'Grant admin consent':`n`n$url" -Verbose
+$url | Set-Clipboard
+```
+
+2. After granting admin consent as per the instructions from the script. Populate the four config settings:
+
+  - AuthenticationMethod
+  - ClientID
+  - EncryptedSecret
+  - TenantID
