@@ -78,7 +78,7 @@ If you are running the write-back script on a virtual machine in Azure, that is 
 
 1. On your Virtual Machine in Azure, find "Identity" and enable System Assigned Managed Identity
 
-!(media/MSI.png)
+![](media/MSI.png)
 
 2. Copy the ObjectID, and run the following to grant Group.Read.All access to the MSI:
 
