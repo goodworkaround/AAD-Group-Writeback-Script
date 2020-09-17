@@ -34,13 +34,13 @@ The script is invoked using Run.ps1, with the ConfigFile parameter. If Run.ps1 i
 Run.config will be used.
 
 ```
-.\Run.ps1
+.\Run.ps1 -Verbose
 ```
 
 ### Normal invocation defining config file as parameter
 
 ```
-.\Run.ps1 -ConfigFile Config.config
+.\Run.ps1 -ConfigFile Config.config -Verbose
 ```
 
 ### Multiple config files
@@ -48,7 +48,7 @@ Run.config will be used.
 The following can be useful if you have multple Azure ADs or limitations in scoping. Remember that the script should then have one destionation OU per config file in order for deletion to work properly.
 
 ```
-"Tenant1.config","Tenant2.config","Tenant3.config" | .\Run.ps1
+"Tenant1.config","Tenant2.config","Tenant3.config" | .\Run.ps1 -Verbose
 ```
 
 ## Configuration

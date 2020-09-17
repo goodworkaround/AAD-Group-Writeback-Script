@@ -13,20 +13,6 @@ Param
 $ErrorActionPreference = "Stop"
 $Config = Get-Content -path $ConfigFile | ConvertFrom-Json
 
-# Set preferences
-if($Config.VerbosePreference -in "Continue","SilentlyContinue") {
-    $VerbosePreference = $Config.VerbosePreference
-} else {
-    $VerbosePreference = "Continue"
-    Write-Verbose "Enabling verbose output by default. Disable by adding VerbosePreference = Continue in Run.config"
-}
-
-if($Config.DebugPreference -in "Continue","SilentlyContinue") {
-    $DebugPreference = $Config.DebugPreference
-} else {
-    $DebugPreference = "SilentlyContinue"
-}
-
 # Import modules
 Import-Module .\AuthenticationMethods\MSI.psm1 -Force -Verbose:$false
 Import-Module .\AuthenticationMethods\ClientCredentials.psm1 -Force -Verbose:$false
