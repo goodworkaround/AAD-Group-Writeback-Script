@@ -2,6 +2,8 @@
 
 This repository contains a script that can take certain groups in an Azure Active Directory, defined by a scope, writing them back to onpremises Active Directory, including group memberships.
 
+![](media/Overview.png)
+
 ## Use cases
 
 - Use the Azure AD Privileged Groups functionality to control AD group memberships with Azure AD Privileged Identity Management (PIM), effectively being a replacement for MIM PAM
