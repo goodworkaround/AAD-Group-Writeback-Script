@@ -156,4 +156,107 @@ function ConvertFrom-Base64JWT
     }
 }
 
-Export-ModuleMember "Get-GraphRequestRecursive", "Save-ADGroup", "ConvertFrom-Base64JWT"
+
+
+<#
+.Synopsis
+   Short description
+.DESCRIPTION
+   Long description
+.EXAMPLE
+   Example of how to use this cmdlet
+.EXAMPLE
+   Another example of how to use this cmdlet
+#>
+function Test-Configuration
+{
+    [CmdletBinding()]
+    Param
+    (
+        [Parameter(Mandatory=$true,
+                   ValueFromPipeline=$true,
+                   Position=0)]
+        $Config
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        # Error if destination ou is not set
+        if(!$Config.DestinationOU) {
+            Write-Error "Mssing DestinationOU configuration setting"
+        }
+
+        # Error if destination ou does not exist
+        try {
+            Get-ADOrganizationalUnit $Config.DestinationOU | Out-Null
+        } catch {
+            Write-Error "Cannot find OU '$($Config.DestinationOU)'" -Exception $_
+        }
+
+        # Check required attributes for authentication method ClientCredentials
+        if($Config.AuthenticationMethod -eq "ClientCredentials") {
+            if($Config.ClientID -notmatch "[a-f0-9A-F]{8}-[a-f0-9A-F]{4}-[a-f0-9A-F]{4}-[a-f0-9A-F]{4}-[a-f0-9A-F]{8}") {
+                Write-Error "AuthenticationMethod 'ClientCredentials' requires ClientID setting in config to be a guid"
+            }
+
+            if(!$Config.EncryptedSecret) {
+                Write-Error "AuthenticationMethod 'ClientCredentials' requires EncryptedSecret setting in config"
+            }
+
+            if($Config.TenantID -notmatch "[a-f0-9A-F]{8}-[a-f0-9A-F]{4}-[a-f0-9A-F]{4}-[a-f0-9A-F]{4}-[a-f0-9A-F]{8}") {
+                Write-Error "AuthenticationMethod 'ClientCredentials' requires TenantID setting in config to be a guid"
+            }
+        }
+
+        # Check required attributes for authentication method MSI
+        if($Config.AuthenticationMethod -eq "MSI") {
+            if($Config.ClientID) {
+                Write-Warning "AuthenticationMethod 'MSI' does not need ClientID setting in config"
+            }
+
+            if(!$Config.EncryptedSecret) {
+                Write-Warning "AuthenticationMethod 'MSI' does not need EncryptedSecret setting in config"
+            }
+
+            if(!$Config.TenantID) {
+                Write-Warning "AuthenticationMethod 'MSI' does not need TenantID setting in config"
+            }
+        }
+
+        # Check that ADGroupObjectIDAttribute is present
+        if(!$Config.ADGroupObjectIDAttribute) {
+            Write-Error "Missing config setting ADGroupObjectIDAttribute, suggested value is 'info'"
+        }
+
+        # Check that AADGroupScopingMethod is present
+        if(!$Config.AADGroupScopingMethod){
+            Write-Error "Missing config setting AADGroupScopingMethod"
+        }
+
+        # Check that AADGroupScopingMethod GroupMemberOfGroup has a valid value for AADGroupScopingConfig
+        if($Config.AADGroupScopingMethod -eq 'GroupMemberOfGroup'){
+            if(!$Config.AADGroupScopingConfig) {
+                Write-Error "Config setting AADGroupScopingMethod 'GroupMemberOfGroup' requires the config setting 'AADGroupScopingConfig' to be present"
+            }
+
+            if($Config.AADGroupScopingConfig -notmatch "[a-f0-9A-F]{8}-[a-f0-9A-F]{4}-[a-f0-9A-F]{4}-[a-f0-9A-F]{4}-[a-f0-9A-F]{8}") {
+                Write-Error "Config setting AADGroupScopingMethod 'GroupMemberOfGroup' requires the config setting 'AADGroupScopingConfig' to be a guid"
+            }
+        }
+
+        # Check that AADGroupScopingMethod Filter has a value for AADGroupScopingConfig
+        if($Config.AADGroupScopingMethod -eq 'Filter'){
+            if(!$Config.AADGroupScopingConfig) {
+                Write-Error "Config setting AADGroupScopingMethod 'Filter' requires the config setting 'AADGroupScopingConfig' to be present"
+            }
+        }
+    }
+    End
+    {
+    }
+}
+
+Export-ModuleMember "Get-GraphRequestRecursive", "Save-ADGroup", "ConvertFrom-Base64JWT", "Test-Configuration"

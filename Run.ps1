@@ -20,6 +20,10 @@ if($Config.DebugPreference -in "Continue","SilentlyContinue") {
 Import-Module .\AuthenticationMethods\MSI.psm1 -Force -Verbose:$false
 Import-Module .\AuthenticationMethods\ClientCredentials.psm1 -Force -Verbose:$false
 Import-Module .\HelperFunctions.psm1 -DisableNameChecking -Force -Verbose:$false
+Import-Module ActiveDirectory
+
+# Check configuration
+Test-Configuration $Config
 
 # Get access token
 $AccessToken = $null
