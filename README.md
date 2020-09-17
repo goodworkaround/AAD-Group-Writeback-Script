@@ -159,17 +159,17 @@ function New-WriteBackScriptInstallation {
         $ConfigFile = $ConfigFile2
     }
 
-    $config = {
+    $_config = [ordered] @{
         AuthenticationMethod = "ClientCredentials"
         ClientID = $app.appid
-        EncryptedSecret "$($key.Value | ConvertTo-SecureString -AsPlainText -Force | ConvertFrom-SecureString)"
+        EncryptedSecret = "$($key.Value | ConvertTo-SecureString -AsPlainText -Force | ConvertFrom-SecureString)"
         TenantID = "$((Get-AzureADCurrentSessionInfo).TenantId.ToString())"
         DestinationOU = "OU=AAD Group writeback,DC=contoso,DC=com"
         ADGroupObjectIDAttribute = "info"
         AADGroupScopingMethod = "PrivilegedGroups"
         GroupDeprovisioningMethod = "PrintWarning"
     } | ConvertTo-Json
-    set-content $ConfigFile -Value $config
+    set-content $ConfigFile -Value $_config
 
     Write-Host "Created file $ConfigFile"
 }
