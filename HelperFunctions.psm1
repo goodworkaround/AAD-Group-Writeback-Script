@@ -1,3 +1,13 @@
+<#
+.Synopsis
+   Helper function that gets stuff from Microsoft Graph and requests all pages recursively
+.DESCRIPTION
+   Helper function that gets stuff from Microsoft Graph and requests all pages recursively
+.EXAMPLE
+   Get-GraphRequestRecursive -Url 'https://graph.microsoft.com/v1.0/groups?$filter=isAssignableToRole eq true' -AccessToken $AccessToken
+.EXAMPLE
+   Get-GraphRequestRecursive -Url "https://graph.microsoft.com/v1.0/groups/<guid>/members?`$select=id,displayName,userPrincipalName,onPremisesDistinguishedName,onPremisesImmutableId" -AccessToken $AccessToken
+#>
 function Get-GraphRequestRecursive {
     [CmdletBinding()]
     [Alias()]
@@ -31,13 +41,11 @@ function Get-GraphRequestRecursive {
 
 <#
 .Synopsis
-   Short description
+   The function takes an array of Azure AD groups as input and ensures that they are created in AD
 .DESCRIPTION
-   Long description
+   The function takes an array of Azure AD groups as input and ensures that they are created in AD
 .EXAMPLE
-   Example of how to use this cmdlet
-.EXAMPLE
-   Another example of how to use this cmdlet
+   $ScopedGroups | Save-ADGroup -ADGroupObjectIDAttribute $Config.ADGroupObjectIDAttribute -DestinationOU $Config.DestinationOU
 #>
 function Save-ADGroup {
     [CmdletBinding(SupportsShouldProcess)]
@@ -103,7 +111,15 @@ function Save-ADGroup {
 }
 
 
-# Helper to make sure length is always divisible by 4
+<#
+.Synopsis
+   Helper to make sure length is always divisible by 4
+.DESCRIPTION
+   Helper to make sure length is always divisible by 4
+.EXAMPLE
+   ConvertFrom-Base64JWTLengthHelper  "abc"
+#>
+
 function ConvertFrom-Base64JWTLengthHelper 
 {
     Param
@@ -126,13 +142,11 @@ function ConvertFrom-Base64JWTLengthHelper
 
 <#
 .Synopsis
-   Short description
+   Function that converts a JWT from its base64 version to an object
 .DESCRIPTION
-   Long description
+   Function that converts a JWT from its base64 version to an object
 .EXAMPLE
-   Example of how to use this cmdlet
-.EXAMPLE
-   Another example of how to use this cmdlet
+   ConvertFrom-Base64JWT "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
 #>
 function ConvertFrom-Base64JWT
 {
@@ -165,13 +179,11 @@ function ConvertFrom-Base64JWT
 
 <#
 .Synopsis
-   Short description
+   Function that valides the configuration
 .DESCRIPTION
-   Long description
+   Function that valides the configuration
 .EXAMPLE
-   Example of how to use this cmdlet
-.EXAMPLE
-   Another example of how to use this cmdlet
+   Test-Configuration $Config
 #>
 function Test-Configuration
 {
@@ -272,15 +284,13 @@ function Test-Configuration
 
 <#
 .Synopsis
-   Short description
+   Function that determines all AD groups that should be deprovisionined
 .DESCRIPTION
-   Long description
+   Function that determines all AD groups that should be deprovisionined
 .EXAMPLE
-   Example of how to use this cmdlet
-.EXAMPLE
-   Another example of how to use this cmdlet
+   Get-ADGroupForDeprovisioning -ScopedGroups $ScopedGroups -DestinationOU $Config.DestinationOU -ADGroupObjectIDAttribute $Config.ADGroupObjectIDAttribute -GroupDeprovisioningMethod $Config.GroupDeprovisioningMethod
 #>
-function Get-ADGroupForDeletion {
+function Get-ADGroupForDeprovisioning {
     [CmdletBinding()]
     Param
     (
@@ -337,4 +347,4 @@ function Get-ADGroupForDeletion {
 }
 
 
-Export-ModuleMember "Get-GraphRequestRecursive", "Save-ADGroup", "ConvertFrom-Base64JWT", "Test-Configuration", "Get-ADGroupForDeletion"
+Export-ModuleMember "Get-GraphRequestRecursive", "Save-ADGroup", "ConvertFrom-Base64JWT", "Test-Configuration", "Get-ADGroupForDeprovisioning"

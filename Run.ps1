@@ -125,8 +125,8 @@ Foreach($ScopedGroup in $ScopedGroups) {
 }
 
 # Determine if any AD groups should be deleted
-Write-Verbose "Determining whether there are AD groups to delete"
-$ADGroupsForDeletion = Get-ADGroupForDeletion -ScopedGroups $ScopedGroups -DestinationOU $Config.DestinationOU -ADGroupObjectIDAttribute $Config.ADGroupObjectIDAttribute -GroupDeprovisioningMethod $Config.GroupDeprovisioningMethod
+Write-Verbose "Determining whether there are AD groups to deprovision"
+$ADGroupsForDeletion = Get-ADGroupForDeprovisioning -ScopedGroups $ScopedGroups -DestinationOU $Config.DestinationOU -ADGroupObjectIDAttribute $Config.ADGroupObjectIDAttribute -GroupDeprovisioningMethod $Config.GroupDeprovisioningMethod
 $Measure = $ADGroupsForDeletion | Measure-Object
 if($Measure.count -gt 0) {
     if($Config.GroupDeprovisioningMethod -eq "Delete") {
@@ -150,5 +150,5 @@ if($Measure.count -gt 0) {
         Write-Verbose "There are $($ADGroupsForDeletion.count) groups that should be delete. Set GroupDeprovisioningMethod to 'Delete', 'PrintWarning' or 'ConvertToDistributionGroup' in order to enable deprovisioning."
     }
 } else {
-    Write-Verbose  "No groups that should be deleted"
+    Write-Verbose  "No groups that should be deprovisioned"
 }

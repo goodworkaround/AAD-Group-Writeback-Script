@@ -11,8 +11,12 @@ This repository contains a script that can take certain groups in an Azure Activ
 Install-WindowsFeature RSAT-AD-PowerShell
 ```
 - Configure authentication (See section 'Authenticating to Azure AD')
+  - I would recommend running this on the server, as the user that will be running the script on a scheduled task.
 - Define all configuration parameters (See section 'Configuration' or example configurations)
 - Run the Run.ps1 file as per the section 'Invocation', with -WhatIf:$true
+  - This will show you what the script wants to do, without the script actually making any changes to AD
+- Run the Run.ps1 file as per the section 'Invocation', **without** -WhatIf:$true. Now the script will write-back your groups.
+- Add the Run.ps1 script to a scheduled task
 
 ## Invocation
 
