@@ -77,7 +77,7 @@ if($Config.AADGroupScopingMethod -eq "PrivilegedGroups") {
 Write-Verbose "Found $(($ScopedGroups|Measure-Object).Count) groups in scope"
 
 # Get or create AD groups for all scoped groups. The returned object will be a dictionary with the ADGroupObjectIDAttribute as key
-$ADGroupsMap = $ScopedGroups | Save-ADGroup -ADGroupObjectIDAttribute $Config.ADGroupObjectIDAttribute -DestinationOU $Config.DestinationOU -ErrorAction Stop -Verbose:($VerbosePreference -eq 'Continue') -WhatIf:$WhatIfPreference
+$ADGroupsMap = $ScopedGroups | Save-ADGroup -ADGroupObjectIDAttribute $Config.ADGroupObjectIDAttribute -DestinationOU $Config.DestinationOU -ErrorAction Stop -Verbose:($VerbosePreference -eq 'Continue') -WhatIf:$WhatIfPreference -ADGroupNamePattern $Config.ADGroupNamePattern
 
 # Parse through all scoped groups, maintaining AD group memberships
 $ErrorActionPreference = "Continue" # No need to fail hard anymore. This reduces the risk of the script failing on ONE user causing issues.

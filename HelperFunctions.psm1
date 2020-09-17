@@ -62,10 +62,15 @@ function Save-ADGroup {
             Position = 1)]
         [string] $DestinationOU,
 
+        # The OU where all groups will be created and is expected to reside
+        [Parameter(Mandatory = $false,
+            Position = 2)]
+        [string] $ADGroupNamePattern = "{0} ({1})",
+
         # The pipeline input object, an Azure AD group
         [Parameter(Mandatory = $true,
             ValueFromPipeline = $true,
-            Position = 2)]
+            Position = 3)]
         $AADGroup
     )
 
@@ -80,22 +85,27 @@ function Save-ADGroup {
             ForEach-Object {
                 $ADGroupMap[$_.$ADGroupObjectIDAttribute] = $_
             }
+
+        if(!$ADGroupNamePattern) {
+            $ADGroupNamePattern = "{0} ({1})"
+        }
     }
     Process {
         Write-Verbose " - Processing AADGroup '$($AADGroup.displayName)' ($($AADGroup.id))"
+        $ADGroupName = $ADGroupNamePattern -f $AADGroup.displayName, $AADGroup.id, $AADGroup.mailNickname
         if(!$ADGroupMap.Contains($AADGroup.id)) {
             Write-Verbose "  - Creating group '$($AADGroup.displayName)' in AD"
-            $ADGroupMap[$AADGroup.id] = New-ADGroup -Name $AADGroup.displayName -DisplayName $AADGroup.displayName -GroupScope Global -GroupCategory Security -Path $DestinationOU -OtherAttributes @{"$($ADGroupObjectIDAttribute)" = $AADGroup.id} -PassThru | Get-ADGroup -Properties members,$ADGroupObjectIDAttribute,displayName,name
+            $ADGroupMap[$AADGroup.id] = New-ADGroup -Name $ADGroupName -DisplayName $ADGroupName -GroupScope Global -GroupCategory Security -Path $DestinationOU -OtherAttributes @{"$($ADGroupObjectIDAttribute)" = $AADGroup.id} -PassThru | Get-ADGroup -Properties members,$ADGroupObjectIDAttribute,displayName,name
         } else {
             $ADGroup = $ADGroupMap[$AADGroup.id]
-            if($AADGroup.displayName -ne $ADGroup.displayName) {
-                Write-Verbose "  - Fixing displayname of AD group: '$($ADGroup.DisplayName)' -> $($AADGroup.displayName)"
-                $ADGroup | Set-ADGroup -DisplayName $AADGroup.displayName
+            if($ADGroupName -ne $ADGroup.displayName) {
+                Write-Verbose "  - Fixing displayname of AD group: '$($ADGroup.DisplayName)' -> $($ADGroupName)"
+                $ADGroup | Set-ADGroup -DisplayName $ADGroupName
             }
 
-            if($AADGroup.displayName -ne $ADGroup.name) {
-                Write-Verbose "  - Fixing name of AD group: '$($ADGroup.name)' -> $($AADGroup.displayName)"
-                $ADGroup | Set-ADGroup -Name $AADGroup.displayName
+            if($ADGroupName -ne $ADGroup.name) {
+                Write-Verbose "  - Fixing name of AD group: '$($ADGroup.name)' -> $($ADGroupName)"
+                $ADGroup | Rename-ADObject -NewName $ADGroupName
             }
 
             if($ADGroup.GroupCategory -ne 'Security' -or $ADGroup.GroupScope -ne 'Global') {
