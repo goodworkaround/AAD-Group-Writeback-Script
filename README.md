@@ -161,5 +161,5 @@ PAM bastion forest support using the AD optional feature for PAM and msDS-Shadow
 
 ```
 $of = get-ADOptionalFeature -filter "name -eq 'privileged access management feature'"
-Enable-ADOptionalFeature $of -scope ForestOrConfigurationSet -target "priv.contoso.local"
+adme updateEnable-ADOptionalFeature $of -scope ForestOrConfigurationSet -target ((Get-ADForest).RootDomain)
 ```
