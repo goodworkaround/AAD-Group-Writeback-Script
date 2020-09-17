@@ -93,6 +93,11 @@ function Save-ADGroup {
     Process {
         Write-Verbose " - Processing AADGroup '$($AADGroup.displayName)' ($($AADGroup.id))"
         $ADGroupName = $ADGroupNamePattern -f $AADGroup.displayName, $AADGroup.id, $AADGroup.mailNickname
+        if($ADGroupName.Length -gt 64) {
+            Write-Warning "AD group name '$ADGroupName' is longer than 64 characters and will be truncated"
+            $ADGroupName = $ADGroupName.Substring(0,64).Trim()
+        }
+
         if(!$ADGroupMap.Contains($AADGroup.id)) {
             Write-Verbose "  - Creating group '$($AADGroup.displayName)' in AD"
             $ADGroupMap[$AADGroup.id] = New-ADGroup -Name $ADGroupName -DisplayName $ADGroupName -GroupScope Global -GroupCategory Security -Path $DestinationOU -OtherAttributes @{"$($ADGroupObjectIDAttribute)" = $AADGroup.id} -PassThru | Get-ADGroup -Properties members,$ADGroupObjectIDAttribute,displayName,name
@@ -220,7 +225,7 @@ function Test-Configuration
         try {
             Get-ADOrganizationalUnit $Config.DestinationOU | Out-Null
         } catch {
-            Write-Error "Cannot find OU '$($Config.DestinationOU)'" -Exception $_
+            Write-Error "Cannot find OU '$($Config.DestinationOU)'"
         }
 
         # Check required attributes for authentication method ClientCredentials
