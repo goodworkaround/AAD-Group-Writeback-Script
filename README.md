@@ -123,6 +123,7 @@ Make sure to run this in the context of the same user, as the same computer you 
 $appName = "AzureAD to AD group writeback script"
 
 Install-Module AzureAD
+Connect-AzureAD
 
 $requiredGrants = [Microsoft.Open.AzureAD.Model.RequiredResourceAccess]::new(
     "00000003-0000-0000-c000-000000000000", # Microsoft Graph
