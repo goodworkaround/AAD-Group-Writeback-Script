@@ -1,6 +1,17 @@
+[CmdletBinding()]
+Param
+(
+    [Parameter(Mandatory=$false,
+                ValueFromPipeline=$true,
+                Position=0)]
+    [ValidateScript( {Test-Path -Path $_ -IsValid})]
+    [ValidateNotNullOrEmpty()]
+    $ConfigFile = ".\Run.config"
+)
+
 # Read configuration
 $ErrorActionPreference = "Stop"
-$Config = Get-Content .\Run.config | ConvertFrom-Json
+$Config = Get-Content -path $ConfigFile | ConvertFrom-Json
 
 # Set preferences
 if($Config.VerbosePreference -in "Continue","SilentlyContinue") {
