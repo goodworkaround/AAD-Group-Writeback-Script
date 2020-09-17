@@ -23,8 +23,8 @@ function Get-MSIMSGraphAccessToken
             if($ErrorVar) {
                 Write-Error "Error when getting MSI access token: $ErrorVar"
             } else {
-                Write-Debug "Got access token: $($_AccessToken.AccessToken)"
-                return $_AccessToken.AccessToken 
+                Write-Debug "Got access token: $($_AccessToken.access_token)"
+                return $_AccessToken.access_token
             }
         } catch {
             Write-Error "Error when getting MSI access token" -Exception $_
