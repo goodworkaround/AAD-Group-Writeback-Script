@@ -39,7 +39,7 @@ function Get-GraphRequestRecursive {
 .EXAMPLE
    Another example of how to use this cmdlet
 #>
-function Ensure-ADGroup {
+function Save-ADGroup {
     [CmdletBinding()]
     [OutputType([System.Collections.Hashtable])]
     Param
@@ -62,7 +62,7 @@ function Ensure-ADGroup {
     )
 
     Begin {
-        Write-Verbose "Starting Ensure-ADGroup"
+        Write-Verbose "Starting Save-ADGroup"
 
         Write-Debug "Getting all groups from destination OU, as this is faster than querying each group one at a time"
         $ADGroupMap = @{}
@@ -92,7 +92,7 @@ function Ensure-ADGroup {
         }
     }
     End {
-        Write-Verbose "Ensure-ADGroup finished"
+        Write-Verbose "Save-ADGroup finished"
         return $ADGroupMap
     }
 }
@@ -156,4 +156,4 @@ function ConvertFrom-Base64JWT
     }
 }
 
-Export-ModuleMember "Get-GraphRequestRecursive", "Ensure-ADGroup", "ConvertFrom-Base64JWT"
+Export-ModuleMember "Get-GraphRequestRecursive", "Save-ADGroup", "ConvertFrom-Base64JWT"

@@ -62,7 +62,7 @@ if($Config.AADGroupScopingMethod -eq "PrivilegedGroups") {
 Write-Verbose "Found $(($ScopedGroups|Measure-Object).Count) groups in scope"
 
 # Get or create AD groups for all scoped groups. The returned object will be a dictionary with the ADGroupObjectIDAttribute as key
-$ADGroupsMap = $ScopedGroups | Ensure-ADGroup -ADGroupObjectIDAttribute $Config.ADGroupObjectIDAttribute -DestinationOU $Config.DestinationOU -ErrorAction Stop
+$ADGroupsMap = $ScopedGroups | Save-ADGroup -ADGroupObjectIDAttribute $Config.ADGroupObjectIDAttribute -DestinationOU $Config.DestinationOU -ErrorAction Stop
 
 # Parse through all scoped groups, maintaining AD group memberships
 Write-Verbose "Processing all memberships"
