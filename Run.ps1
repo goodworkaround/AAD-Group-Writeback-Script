@@ -69,6 +69,7 @@ Write-Verbose "Found $(($ScopedGroups|Measure-Object).Count) groups in scope"
 $ADGroupsMap = $ScopedGroups | Save-ADGroup -ADGroupObjectIDAttribute $Config.ADGroupObjectIDAttribute -DestinationOU $Config.DestinationOU -ErrorAction Stop
 
 # Parse through all scoped groups, maintaining AD group memberships
+$ErrorActionPreference = "Continue" # No need to fail hard anymore. This reduces the risk of the script failing on ONE user causing issues.
 Write-Verbose "Processing all memberships"
 Foreach($ScopedGroup in $ScopedGroups) {
     Write-Verbose " - Processing group '$($ScopedGroup.displayName)' ($($ScopedGroup.id))"
@@ -110,4 +111,33 @@ Foreach($ScopedGroup in $ScopedGroups) {
     } else {
         Write-Warning "Unable to find AD group for AAD group '$($ScopedGroup.displayName)' ($($ScopedGroup.id))"
     }
+}
+
+# Determine if any AD groups should be deleted
+Write-Verbose "Determining whether there are AD groups to delete"
+$ADGroupsForDeletion = Get-ADGroupForDeletion -ScopedGroups $ScopedGroups -DestinationOU $Config.DestinationOU -ADGroupObjectIDAttribute $Config.ADGroupObjectIDAttribute -GroupDeprovisioningMethod $Config.GroupDeprovisioningMethod
+$Measure = $ADGroupsForDeletion | Measure-Object
+if($Measure.count -gt 0) {
+    if($Config.GroupDeprovisioningMethod -eq "Delete") {
+        Write-Verbose "Starting deletion of groups"
+        $ADGroupsForDeletion | ForEach-Object {
+            Write-Verbose " - Deleting AD group: $($_.DistinguishedName)"
+            $_ | Remove-ADGroup -Confirm:$false
+        }
+    } elseif($Config.GroupDeprovisioningMethod -eq "PrintWarning") {
+        Write-Verbose "Print group deletions as warnings"
+        $ADGroupsForDeletion | ForEach-Object {
+            Write-Warning "Pending AD group deletion: $($_.DistinguishedName)"
+        }
+    } elseif($Config.GroupDeprovisioningMethod -eq "ConvertToDistributionGroup") {
+        Write-Verbose "Converting AD groups that should be deleted, to distribution groups"
+        $ADGroupsForDeletion | ForEach-Object {
+            Write-Verbose " - Converting AD group: $($_.DistinguishedName)"
+            $_ | Set-ADGroup -GroupCategory Distribution
+        }
+    } else {
+        Write-Verbose "There are $($ADGroupsForDeletion.count) groups that should be delete. Set GroupDeprovisioningMethod to 'Delete', 'PrintWarning' or 'ConvertToDistributionGroup' in order to enable deprovisioning."
+    }
+} else {
+    Write-Verbose  "No groups that should be deleted"
 }

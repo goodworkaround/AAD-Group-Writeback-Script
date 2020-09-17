@@ -89,6 +89,11 @@ function Save-ADGroup {
                 Write-Verbose "  - Fixing name of AD group: '$($ADGroup.name)' -> $($AADGroup.displayName)"
                 $ADGroup | Set-ADGroup -Name $AADGroup.displayName
             }
+
+            if($ADGroup.GroupCategory -ne 'Security' -or $ADGroup.GroupScope -ne 'Global') {
+                Write-Verbose "  - Changing group scope and category to global security"
+                $ADGroup | Set-ADGroup -GroupScope Global -GroupCategory Security
+            }
         }
     }
     End {
@@ -253,10 +258,84 @@ function Test-Configuration
                 Write-Error "Config setting AADGroupScopingMethod 'Filter' requires the config setting 'AADGroupScopingConfig' to be present"
             }
         }
+
+        if($Config.GroupDeprovisioningMethod -notin "PrintWarning","ConvertToDistributionGroup","DoNothing", "Delete") {
+            Write-Error "Config setting GroupDeprovisioningMethod does not contain a valid value. Valid values are: PrintWarning, ConvertToDistributionGroup, DoNothing, Delete"
+        }
     }
     End
     {
     }
 }
 
-Export-ModuleMember "Get-GraphRequestRecursive", "Save-ADGroup", "ConvertFrom-Base64JWT", "Test-Configuration"
+
+
+<#
+.Synopsis
+   Short description
+.DESCRIPTION
+   Long description
+.EXAMPLE
+   Example of how to use this cmdlet
+.EXAMPLE
+   Another example of how to use this cmdlet
+#>
+function Get-ADGroupForDeletion {
+    [CmdletBinding()]
+    Param
+    (
+        # AD groups map used to determine AD groups that SHOULD be in AD
+        [Parameter(Mandatory = $true,
+            Position = 0)]
+        $ScopedGroups,
+
+        [Parameter(Mandatory = $true,
+            Position = 1)]
+        [string] $DestinationOU,
+
+        [Parameter(Mandatory = $true,
+            Position = 2)]
+        [string] $ADGroupObjectIDAttribute,
+
+        [Parameter(Mandatory = $true,
+            Position = 3)]
+        [string] $GroupDeprovisioningMethod
+    )
+
+    Begin {
+        
+    }
+    Process {
+        Write-Verbose "Starting Get-ADGroupForDeletion"
+
+        $_AADGroupsMap = @{}
+        if($ScopedGroups) {
+            $ScopedGroups | ForEach-Object {
+                $_AADGroupsMap[$_.id] = $_
+            }
+        }
+
+        Write-Debug "Getting all groups from destination OU, as this is faster than querying each group one at a time"
+
+        $_ToDelete = New-Object System.Collections.ArrayList
+        Get-ADGroup -SearchBase $DestinationOU -Filter * -Properties $ADGroupObjectIDAttribute,displayName,name |
+            ForEach-Object {
+                if(!$_.$ADGroupObjectIDAttribute) {
+                    Write-Verbose " - adding group '$($_.DistinguishedName)' to delete list because attribute $ADGroupObjectIDAttribute is not set for the group"
+                    $_
+                } elseif($GroupDeprovisioningMethod -eq "ConvertToDistributionGroup" -and $_.GroupCategory -eq "Distribution") {
+                    Write-Debug "Ignoring group '$($_.DistinguishedName)' because it is a distribution list, and GroupDeprovisioningMethod is 'ConvertToDistributionGroup'"
+                } elseif (!$_AADGroupsMap.ContainsKey($_.$ADGroupObjectIDAttribute)){
+                    Write-Verbose " - adding group '$($_.DistinguishedName)' to delete list because it does not exist in Azure AD"
+                    $_
+                }
+            }
+
+        Write-Verbose "Ending Get-ADGroupForDeletion"
+    }
+    End {
+    }
+}
+
+
+Export-ModuleMember "Get-GraphRequestRecursive", "Save-ADGroup", "ConvertFrom-Base64JWT", "Test-Configuration", "Get-ADGroupForDeletion"
