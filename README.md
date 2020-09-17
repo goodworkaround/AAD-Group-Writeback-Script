@@ -98,7 +98,7 @@ $ObjectID = "<guid>"
 Install-Module AzureAD
 $graph = Get-AzureADServicePrincipal -Filter "AppId eq '00000003-0000-0000-c000-000000000000'" 
 $groupReadAll = $graph.AppRoles | ? Value -eq "Group.Read.All"
-New-AzureADServiceAppRoleAssignment -Id $groupReadAll.Id -PrincipalId $ObjectId -ResourceId $graph.ObjectId
+New-AzureADServiceAppRoleAssignment -Id $groupReadAll.Id -PrincipalId $ObjectId -ResourceId $graph.ObjectId -ObjectID $ObjectID
 ```
 
 Now, in your config file, set AuthenticationMethod to "MSI". No need to provide ClientID, TenantID or EncryptedSecret.
