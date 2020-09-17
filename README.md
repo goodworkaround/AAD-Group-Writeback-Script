@@ -64,7 +64,7 @@ The following can be useful if you have multple Azure ADs or limitations in scop
 | AADGroupScopingMethod       | Yes       | The method of determining which AAD groups to sync          | Filter / GroupMemberOfGroup / PrivilegedGroups |
 | AADGroupScopingConfig       | 2         | Additional info required to determine groups (filter etc.)  | id eq '<objectid>'                  |
 | GroupDeprovisioningMethod   | Yes       | Determines what to do when source AAD group is deleted      | Delete / ConvertToDistributionGroup / PrintWarning / DoNothing |
-| ADGroupNamePattern          | No        | Pattern for AD group name, {0} = displayName from AAD, {1} = objectId from AAD, {2} = mailNickname from AAD | {0} ({1}) |
+| ADGroupNamePattern          | No        | Format string for AD group name, {0} = displayName from AAD, {1} = objectId from AAD, {2} = mailNickname from AAD | {0} ({1}) |
 
 1 - If AuthenticationMethod is ClientCredentials
 2 - If AADGroupScopingMethod is GroupMemberOfGroup or AADGroupScopingConfig
