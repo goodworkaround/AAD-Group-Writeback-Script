@@ -34,7 +34,7 @@ Import-Module .\HelperFunctions.psm1 -DisableNameChecking -Force -Verbose:$false
 Import-Module ActiveDirectory -Verbose:$false
 
 # Check configuration
-Test-Configuration $Config
+Test-Configuration $Config -ErrorAction Stop
 
 # Get access token
 $AccessToken = $null
@@ -59,18 +59,18 @@ if($JWT.Payload.roles -notcontains "Group.Read.All") {
     Write-Verbose " - app_displayname: $($jwt.payload.app_displayname)"
     Write-Verbose " - roles:           $($jwt.payload.roles)"
 } else {
-    Write-Error "Someting went wrong when getting access token"
+    Write-Error "Someting went wrong when getting access token" -ErrorAction Stop
 }
 
 # Get all scoped groups
 Write-Verbose "Getting all scoped groups"
 $ScopedGroups = $null
 if($Config.AADGroupScopingMethod -eq "PrivilegedGroups") {
-    $ScopedGroups = Get-GraphRequestRecursive -Url 'https://graph.microsoft.com/v1.0/groups?$filter=isAssignableToRole eq true' -AccessToken $AccessToken
+    $ScopedGroups = Get-GraphRequestRecursive -Url 'https://graph.microsoft.com/v1.0/groups?$filter=isAssignableToRole eq true' -AccessToken $AccessToken -ErrorAction Stop
 } elseif($Config.AADGroupScopingMethod -eq "Filter") {
-    $ScopedGroups = Get-GraphRequestRecursive -Url ('https://graph.microsoft.com/v1.0/groups?$filter={0}' -f $Config.AADGroupScopingFilter) -AccessToken $AccessToken
+    $ScopedGroups = Get-GraphRequestRecursive -Url ('https://graph.microsoft.com/v1.0/groups?$filter={0}' -f $Config.AADGroupScopingFilter) -AccessToken $AccessToken -ErrorAction Stop
 } elseif($Config.AADGroupScopingMethod -eq "GroupMemberOfGroup") {
-    $ScopedGroups = Get-GraphRequestRecursive -Url ('https://graph.microsoft.com/v1.0/groups/{0}/members' -f $Config.AADGroupScopingFilter) -AccessToken $AccessToken
+    $ScopedGroups = Get-GraphRequestRecursive -Url ('https://graph.microsoft.com/v1.0/groups/{0}/members' -f $Config.AADGroupScopingConfig) -AccessToken $AccessToken -ErrorAction Stop
 } else {
     Write-Error "Unknown value for AADGroupScopingMethod: $($Config.AADGroupScopingMethod)" -ErrorAction Stop
 }
