@@ -50,7 +50,13 @@ if($Config.AuthenticationMethod -eq "MSI") {
 $JWT = ConvertFrom-Base64JWT $AccessToken
 if($JWT.Payload.roles -notcontains "Group.Read.All") {
     Write-Warning "Could not find Group.Read.All in access token roles. Things might not work as intended. Make sure you have the correct scopes added."
-} elseif($jwt.Payload.aud) {
+} 
+
+if($JWT.Payload.roles -notcontains "User.Read.All") {
+    Write-Warning "Could not find User.Read.All in access token roles. Things might not work as intended. Make sure you have the correct scopes added."
+} 
+
+if($jwt.Payload.aud) {
     Write-Verbose "Successfully received access token"
     Write-Verbose " - oid:             $($jwt.payload.oid)"
     Write-Verbose " - aud:             $($jwt.payload.oid)"
@@ -84,7 +90,7 @@ $ErrorActionPreference = "Continue" # No need to fail hard anymore. This reduces
 Write-Verbose "Processing all memberships"
 Foreach($ScopedGroup in $ScopedGroups) {
     Write-Verbose " - Processing group '$($ScopedGroup.displayName)' ($($ScopedGroup.id))"
-    $Members = Get-GraphRequestRecursive -Url "https://graph.microsoft.com/v1.0/groups/$($ScopedGroup.id)/members?`$select=id,displayName,userPrincipalName,onPremisesDistinguishedName,onPremisesImmutableId" -AccessToken $AccessToken
+    $Members = Get-GraphRequestRecursive -Url "https://graph.microsoft.com/v1.0/groups/$($ScopedGroup.id)/members?`$select=id,userType,displayName,userPrincipalName,onPremisesDistinguishedName,onPremisesImmutableId" -AccessToken $AccessToken
     
     # Get all onPremisesDistinguishedName values from AAD, which should be our correct list
     $ExpectedADMembers = $Members | 
