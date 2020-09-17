@@ -13,6 +13,7 @@ This repository contains a script that can take certain groups in an Azure Activ
 
 ## Setup
 
+- Make sure that you are running Azure AD Connect 1.1.553.0 or newer (it came out in 2017, so shame on you if you are not)
 - Download or clone this repository into a folder on one of your servers
 - Install the Active Directory PowerShell module 
 
