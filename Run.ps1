@@ -1,4 +1,4 @@
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess)]
 Param
 (
     [Parameter(Mandatory=$false,
@@ -77,7 +77,7 @@ if($Config.AADGroupScopingMethod -eq "PrivilegedGroups") {
 Write-Verbose "Found $(($ScopedGroups|Measure-Object).Count) groups in scope"
 
 # Get or create AD groups for all scoped groups. The returned object will be a dictionary with the ADGroupObjectIDAttribute as key
-$ADGroupsMap = $ScopedGroups | Save-ADGroup -ADGroupObjectIDAttribute $Config.ADGroupObjectIDAttribute -DestinationOU $Config.DestinationOU -ErrorAction Stop
+$ADGroupsMap = $ScopedGroups | Save-ADGroup -ADGroupObjectIDAttribute $Config.ADGroupObjectIDAttribute -DestinationOU $Config.DestinationOU -ErrorAction Stop -Verbose:($VerbosePreference -eq 'Continue') -WhatIf:$WhatIfPreference
 
 # Parse through all scoped groups, maintaining AD group memberships
 $ErrorActionPreference = "Continue" # No need to fail hard anymore. This reduces the risk of the script failing on ONE user causing issues.
@@ -99,7 +99,7 @@ Foreach($ScopedGroup in $ScopedGroups) {
         }
 
     # If an AD group exists for the AAD group (should always happen)
-    if($ADGroupsMap.Contains($ScopedGroup.Id)) {
+    if($ADGroupsMap.Contains($ScopedGroup.Id) -and $ADGroupsMap[$ScopedGroup.Id].DistinguishedName) {
         $ADGroup = $ADGroupsMap[$ScopedGroup.Id]
         
         # Find members in AD, that should not be there, and remove them
@@ -108,7 +108,7 @@ Foreach($ScopedGroup in $ScopedGroups) {
                 Where-Object {$_ -notin $ExpectedADMembers} |
                 ForEach-Object {
                     Write-Verbose "  - Removing member from AD group '$($ADGroup.displayName)': $($_)"
-                    Remove-ADGroupMember -Identity $ADGroup.DistinguishedName -Members $_ -Confirm:$false
+                    Remove-ADGroupMember -Identity $ADGroup.DistinguishedName -Members $_ -Confirm:$false -WhatIf:$WhatIfPreference
                 }
         }
         
@@ -117,7 +117,7 @@ Foreach($ScopedGroup in $ScopedGroups) {
             Where-Object {$_ -notin $ADGroup.Members} |
             ForEach-Object {
                 Write-Verbose "  - Adding member to AD group '$($ADGroup.displayName)': $($_)"
-                Add-ADGroupMember -Identity $ADGroup.DistinguishedName -Members $_
+                Add-ADGroupMember -Identity $ADGroup.DistinguishedName -Members $_ -WhatIf:$WhatIfPreference
             }
     } else {
         Write-Warning "Unable to find AD group for AAD group '$($ScopedGroup.displayName)' ($($ScopedGroup.id))"
@@ -133,7 +133,7 @@ if($Measure.count -gt 0) {
         Write-Verbose "Starting deletion of groups"
         $ADGroupsForDeletion | ForEach-Object {
             Write-Verbose " - Deleting AD group: $($_.DistinguishedName)"
-            $_ | Remove-ADGroup -Confirm:$false
+            $_ | Remove-ADGroup -Confirm:$false -WhatIf:$WhatIfPreference
         }
     } elseif($Config.GroupDeprovisioningMethod -eq "PrintWarning") {
         Write-Verbose "Print group deletions as warnings"
@@ -144,7 +144,7 @@ if($Measure.count -gt 0) {
         Write-Verbose "Converting AD groups that should be deleted, to distribution groups"
         $ADGroupsForDeletion | ForEach-Object {
             Write-Verbose " - Converting AD group: $($_.DistinguishedName)"
-            $_ | Set-ADGroup -GroupCategory Distribution
+            $_ | Set-ADGroup -GroupCategory Distribution -WhatIf:$WhatIfPreference
         }
     } else {
         Write-Verbose "There are $($ADGroupsForDeletion.count) groups that should be delete. Set GroupDeprovisioningMethod to 'Delete', 'PrintWarning' or 'ConvertToDistributionGroup' in order to enable deprovisioning."

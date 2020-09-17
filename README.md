@@ -11,9 +11,8 @@ This repository contains a script that can take certain groups in an Azure Activ
 Install-WindowsFeature RSAT-AD-PowerShell
 ```
 - Configure authentication (See section 'Authenticating to Azure AD')
-
-
-
+- Define all configuration parameters (See section 'Configuration' or example configurations)
+- Run the Run.ps1 file as per the section 'Invocation', with -WhatIf:$true
 
 ## Invocation
 
@@ -136,7 +135,7 @@ Write-Verbose "Go to the url that already is put on the clipboard and click 'Gra
 $url | Set-Clipboard
 ```
 
-2. After granting admin consent as per the instructions from the script. Populate the four config settings:
+2. After granting admin consent as per the instructions from the script. Populate the four config settings below with the values from the script:
 
   - AuthenticationMethod
   - ClientID
