@@ -120,7 +120,7 @@ If you cannot use MSI, this is the way to go.
 Make sure to run this in the context of the same user, as the same computer you will be running the write-back script on. This is due to the secure string handling :)
 
 ```PowerShell
-$appName = "Any name"
+$appName = "AzureAD to AD group writeback script"
 
 Install-Module AzureAD
 
