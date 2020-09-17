@@ -95,10 +95,15 @@ If you are running the write-back script on a virtual machine in Azure, that is 
 
 ```
 $ObjectID = "<guid>"
+
+# No need to edit below this line, just run
 Install-Module AzureAD
+Connect-AzureAD
 $graph = Get-AzureADServicePrincipal -Filter "AppId eq '00000003-0000-0000-c000-000000000000'" 
 $groupReadAll = $graph.AppRoles | ? Value -eq "Group.Read.All"
 New-AzureADServiceAppRoleAssignment -Id $groupReadAll.Id -PrincipalId $ObjectId -ResourceId $graph.ObjectId -ObjectID $ObjectID
+$userReadAll = $graph.AppRoles | ? Value -eq "User.Read.All"
+New-AzureADServiceAppRoleAssignment -Id $userReadAll.Id -PrincipalId $ObjectId -ResourceId $graph.ObjectId -ObjectID $ObjectID
 ```
 
 Now, in your config file, set AuthenticationMethod to "MSI". No need to provide ClientID, TenantID or EncryptedSecret.
