@@ -317,7 +317,6 @@ function Get-ADGroupForDeletion {
 
         Write-Debug "Getting all groups from destination OU, as this is faster than querying each group one at a time"
 
-        $_ToDelete = New-Object System.Collections.ArrayList
         Get-ADGroup -SearchBase $DestinationOU -Filter * -Properties $ADGroupObjectIDAttribute,displayName,name |
             ForEach-Object {
                 if(!$_.$ADGroupObjectIDAttribute) {
