@@ -15,6 +15,7 @@ This repository contains a script that can take certain groups in an Azure Activ
 
 - Make sure that you are running Azure AD Connect 1.1.553.0 or newer (it came out in 2017, so shame on you if you are not)
 - Download or clone this repository into a folder on one of your servers
+  - Because this script will handle groups that have high privilege, you should put this script on a "Tier 0" type server, such as a domain controller og your Azure AD Connect server.
 - Install the Active Directory PowerShell module 
 
 ```
