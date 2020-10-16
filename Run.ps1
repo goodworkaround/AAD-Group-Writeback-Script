@@ -35,11 +35,19 @@ if($Config.AuthenticationMethod -eq "MSI") {
 # Verify access token
 $JWT = ConvertFrom-Base64JWT $AccessToken
 if($JWT.Payload.roles -notcontains "Group.Read.All") {
-    Write-Warning "Could not find Group.Read.All in access token roles. Things might not work as intended. Make sure you have the correct scopes added."
+    if($Config.AuthenticationMethod -eq "MSI") {
+        Write-Warning "Could not find Group.Read.All in access token roles. Things might not work as intended. Make sure you have the correct scopes added. Make sure you follow https://github.com/goodworkaround/AAD-Group-Writeback-Script#managed-service-identity-msi in order to configure MSI. If you recently added permissions using New-AzureADServiceAppRoleAssignment, and you ran into this error BEFORE running New-AzureADServiceAppRoleAssignment, please wait an hour until a new access token is available through MSI."
+    } else {
+        Write-Warning "Could not find Group.Read.All in access token roles. Things might not work as intended. Make sure you have the correct scopes added. "
+    }
 } 
 
 if($JWT.Payload.roles -notcontains "User.Read.All") {
-    Write-Warning "Could not find User.Read.All in access token roles. Things might not work as intended. Make sure you have the correct scopes added."
+    if($Config.AuthenticationMethod -eq "MSI") {
+        Write-Warning "Could not find User.Read.All in access token roles. Things might not work as intended. Make sure you have the correct scopes added. Make sure you follow https://github.com/goodworkaround/AAD-Group-Writeback-Script#managed-service-identity-msi in order to configure MSI. If you recently added permissions using New-AzureADServiceAppRoleAssignment, and you ran into this error BEFORE running New-AzureADServiceAppRoleAssignment, please wait an hour until a new access token is available through MSI."
+    } else {
+        Write-Warning "Could not find User.Read.All in access token roles. Things might not work as intended. Make sure you have the correct scopes added. "
+    }
 } 
 
 if($jwt.Payload.aud) {
