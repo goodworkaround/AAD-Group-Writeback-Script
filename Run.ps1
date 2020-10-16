@@ -60,7 +60,10 @@ $ScopedGroups = $null
 if($Config.AADGroupScopingMethod -eq "PrivilegedGroups") {
     $ScopedGroups = Get-GraphRequestRecursive -Url 'https://graph.microsoft.com/v1.0/groups?$filter=isAssignableToRole eq true' -AccessToken $AccessToken -ErrorAction Stop
 } elseif($Config.AADGroupScopingMethod -eq "Filter") {
-    $ScopedGroups = Get-GraphRequestRecursive -Url ('https://graph.microsoft.com/v1.0/groups?$filter={0}' -f $Config.AADGroupScopingFilter) -AccessToken $AccessToken -ErrorAction Stop
+    if(!$Config.AADGroupScopingConfig) {
+        Write-Error "AADGroupScopingMethod 'Filter' requires the AADGroupScopingConfig to be set to a filter"
+    }
+    $ScopedGroups = Get-GraphRequestRecursive -Url ('https://graph.microsoft.com/v1.0/groups?$filter={0}' -f $Config.AADGroupScopingConfig) -AccessToken $AccessToken -ErrorAction Stop
 } elseif($Config.AADGroupScopingMethod -eq "GroupMemberOfGroup") {
     $ScopedGroups = Get-GraphRequestRecursive -Url ('https://graph.microsoft.com/v1.0/groups/{0}/members' -f $Config.AADGroupScopingConfig) -AccessToken $AccessToken -ErrorAction Stop
 } else {
