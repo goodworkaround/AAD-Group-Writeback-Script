@@ -35,9 +35,22 @@ function Get-ClientCredentialsMSGraphAccessToken {
         
 
       try {
+
+	#Create request body
+	$body = @{
+	    client_id     = $ClientID
+	    scope         = "https://graph.microsoft.com/.default"
+	    client_secret = $Credential.GetNetworkCredential().Password
+	
+	    #There different grant_types see here
+	    grant_type    = "client_credentials"
+	}
+
+
          $ErrorVar = $null
          $Credential = [PSCredential]::new($ClientID, (ConvertTo-SecureString $EncryptedSecret))
-         $_AccessToken = Invoke-RestMethod "https://login.microsoftonline.com/$($TenantID)/oauth2/v2.0/token" -Body "client_id=$($ClientID)&scope=https://graph.microsoft.com/.default&client_secret=$($Credential.GetNetworkCredential().Password)&grant_type=client_credentials" -ContentType "application/x-www-form-urlencoded" -Method Post
+         #$_AccessToken = Invoke-RestMethod "https://login.microsoftonline.com/$($TenantID)/oauth2/v2.0/token" -Body "client_id=$($ClientID)&scope=https://graph.microsoft.com/.default&client_secret=$($Credential.GetNetworkCredential().Password)&grant_type=client_credentials" -ContentType "application/x-www-form-urlencoded" -Method Post
+	 $_AccessToken = Invoke-RestMethod "https://login.microsoftonline.com/$($TenantID)/oauth2/v2.0/token" -Body $body -ContentType "application/x-www-form-urlencoded" -Method Post
          if ($ErrorVar) {
                Write-Error "Error when getting access token using client credentials: $ErrorVar"
          }
