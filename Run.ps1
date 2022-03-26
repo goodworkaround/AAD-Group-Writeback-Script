@@ -12,22 +12,23 @@ Param
 # Read configuration
 $ErrorActionPreference = "Stop"
 $Config = Get-Content -path $ConfigFile | ConvertFrom-Json
-
-# Import modules
-Import-Module .\AuthenticationMethods\MSI.psm1 -Force -Verbose:$false
-Import-Module .\AuthenticationMethods\ClientCredentials.psm1 -Force -Verbose:$false
-Import-Module .\HelperFunctions.psm1 -DisableNameChecking -Force -Verbose:$false
-Import-Module ActiveDirectory -Verbose:$false
-
 # Check configuration
 Test-Configuration $Config -ErrorAction Stop
+
+# Import modules
+Import-Module .\HelperFunctions.psm1 -DisableNameChecking -Force -Verbose:$VerbosePreference
+Import-Module .\AuthenticationMethods\MSI.psm1 -Force -Verbose:$VerbosePreference
+Import-Module .\AuthenticationMethods\ClientCredentials.psm1 -Force -Verbose:$VerbosePreference
+Import-Module ActiveDirectory -Verbose:$VerbosePreference
+
+$graphEndpoints = Initialize-GraphEnvironment -Environment $config.Environment
 
 # Get access token
 $AccessToken = $null
 if($Config.AuthenticationMethod -eq "MSI") {
-    $AccessToken = Get-MSIMSGraphAccessToken
+    $AccessToken = Get-MSIMSGraphAccessToken -GraphUrl $graphEndpoints.GraphUrl -Verbose:$VerbosePreference
 } elseif($Config.AuthenticationMethod -eq "ClientCredentials") {
-    $AccessToken = Get-ClientCredentialsMSGraphAccessToken -ClientID $Config.ClientID -EncryptedSecret $Config.EncryptedSecret -TenantID $Config.TenantID
+    $AccessToken = Get-ClientCredentialsMSGraphAccessToken -ClientID $Config.ClientID -EncryptedSecret $Config.EncryptedSecret -TenantID $Config.TenantID -LoginUrl $graphEndpoints.LoginUrl -Verbose:$VerbosePreference
 } else {
     Write-Error "Unknown value for AuthenticationMethod: $($Config.AuthenticationMethod)" -ErrorAction Stop
 }
@@ -66,14 +67,14 @@ if($jwt.Payload.aud) {
 Write-Verbose "Getting all scoped groups"
 $ScopedGroups = $null
 if($Config.AADGroupScopingMethod -eq "PrivilegedGroups") {
-    $ScopedGroups = Get-GraphRequestRecursive -Url 'https://graph.microsoft.com/v1.0/groups?$filter=isAssignableToRole eq true' -AccessToken $AccessToken -ErrorAction Stop
+    $ScopedGroups = Get-GraphRequestRecursive -Url "$($graphEndpoints.GraphUrl)/v1.0/groups?$filter=isAssignableToRole eq true" -AccessToken $AccessToken -ErrorAction Stop
 } elseif($Config.AADGroupScopingMethod -eq "Filter") {
     if(!$Config.AADGroupScopingConfig) {
         Write-Error "AADGroupScopingMethod 'Filter' requires the AADGroupScopingConfig to be set to a filter"
     }
-    $ScopedGroups = Get-GraphRequestRecursive -Url ('https://graph.microsoft.com/v1.0/groups?$filter={0}' -f $Config.AADGroupScopingConfig) -AccessToken $AccessToken -ErrorAction Stop
+    $ScopedGroups = Get-GraphRequestRecursive -Url ("$($graphEndpoints.GraphUrl)/v1.0/groups?$filter={0}" -f $Config.AADGroupScopingConfig) -AccessToken $AccessToken -ErrorAction Stop
 } elseif($Config.AADGroupScopingMethod -eq "GroupMemberOfGroup") {
-    $ScopedGroups = Get-GraphRequestRecursive -Url ('https://graph.microsoft.com/v1.0/groups/{0}/members' -f $Config.AADGroupScopingConfig) -AccessToken $AccessToken -ErrorAction Stop
+    $ScopedGroups = Get-GraphRequestRecursive -Url ("$($graphEndpoints.GraphUrl)/v1.0/groups/{0}/members" -f $Config.AADGroupScopingConfig) -AccessToken $AccessToken -ErrorAction Stop
 } else {
     Write-Error "Unknown value for AADGroupScopingMethod: $($Config.AADGroupScopingMethod)" -ErrorAction Stop
 }
@@ -87,7 +88,7 @@ $ErrorActionPreference = "Continue" # No need to fail hard anymore. This reduces
 Write-Verbose "Processing all memberships"
 Foreach($ScopedGroup in $ScopedGroups) {
     Write-Verbose " - Processing group '$($ScopedGroup.displayName)' ($($ScopedGroup.id))"
-    $Members = Get-GraphRequestRecursive -Url "https://graph.microsoft.com/v1.0/groups/$($ScopedGroup.id)/members?`$select=id,userType,displayName,userPrincipalName,onPremisesDistinguishedName,onPremisesImmutableId" -AccessToken $AccessToken
+    $Members = Get-GraphRequestRecursive -Url "$($graphEndpoints.GraphUrl)/v1.0/groups/$($ScopedGroup.id)/members?`$select=id,userType,displayName,userPrincipalName,onPremisesDistinguishedName,onPremisesImmutableId" -AccessToken $AccessToken
     
     # Get all onPremisesDistinguishedName values from AAD, which should be our correct list
     $ExpectedADMembers = $Members | 

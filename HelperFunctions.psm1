@@ -361,5 +361,45 @@ function Get-ADGroupForDeprovisioning {
     }
 }
 
+<#
+.Synopsis
+   Function that specifies endpoints for Azure Services based on cloud
+.DESCRIPTION
+   Function that specifies endpoints for Azure Services based on cloud
+.EXAMPLE
+   Initialize-GraphEnvironment -Environment $Config.AzureCloud
+#>
+function Initialize-GraphEnvironment
+{
+    [CmdletBinding()]
+    param
+    (
+        [ValidateSet('AzureCloud', 'AzureUSGovernment')]
+        [string] $Environment = 'AzureCloud'
+    )
+    Write-Verbose  "Setting Graph Environment: $Environment"
+    $graphEnvironmentTemplate += switch ($Environment)
+    {
+        'AzureCloud'
+        {
+            @{
+                GraphUrl = "https://graph.microsoft.com/"
+                LoginUrl = "https://login.microsoftonline.com/"      
+            }
+        }
+        'AzureUSGovernment'
+        {
+            @{
+                GraphUrl = "https://graph.microsoft.us/"
+                LoginUrl = "https://login.microsoftonline.us/"      
+            }   
+        }
+        default
+        {
+            throw New-Object NotImplementedException("Unknown environment name '$Environment'")
+        }
+    }
+    return [pscustomobject]$graphEnvironmentTemplate
+}
 
-Export-ModuleMember "Get-GraphRequestRecursive", "Save-ADGroup", "ConvertFrom-Base64JWT", "Test-Configuration", "Get-ADGroupForDeprovisioning"
+Export-ModuleMember "Get-GraphRequestRecursive", "Save-ADGroup", "ConvertFrom-Base64JWT", "Test-Configuration", "Get-ADGroupForDeprovisioning", "Initialize-GraphEnvironment"

@@ -26,7 +26,12 @@ function Get-ClientCredentialsMSGraphAccessToken {
         # AD attribute used for anchoring, will contain the objectid from Azure AD
         [Parameter(Mandatory = $true,
             Position = 2)]
-        [string] $TenantID
+        [string] $TenantID,
+
+        [Parameter(Mandatory = $true,
+            Position = 3)]
+        [ValidateNotNull()]
+        [string] $LoginUrl
     )
 
     Begin {
@@ -38,20 +43,19 @@ function Get-ClientCredentialsMSGraphAccessToken {
 
        $Credential = [PSCredential]::new($ClientID, (ConvertTo-SecureString $EncryptedSecret))
 
-	#Create request body
-	$body = @{
-	    client_id     = $ClientID
-	    scope         = "https://graph.microsoft.com/.default"
-	    client_secret = $Credential.GetNetworkCredential().Password
-	
-	    #There different grant_types see here
-	    grant_type    = "client_credentials"
-	}
+   #Create request body
+   $body = @{
+       client_id     = $ClientID
+       scope         = "$LoginUrl/.default"
+       client_secret = $Credential.GetNetworkCredential().Password
+   
+       #There different grant_types see here
+       grant_type    = "client_credentials"
+   }
 
 
          $ErrorVar = $null
-         #$_AccessToken = Invoke-RestMethod "https://login.microsoftonline.com/$($TenantID)/oauth2/v2.0/token" -Body "client_id=$($ClientID)&scope=https://graph.microsoft.com/.default&client_secret=$($Credential.GetNetworkCredential().Password)&grant_type=client_credentials" -ContentType "application/x-www-form-urlencoded" -Method Post
-	 $_AccessToken = Invoke-RestMethod "https://login.microsoftonline.com/$($TenantID)/oauth2/v2.0/token" -Body $body -ContentType "application/x-www-form-urlencoded" -Method Post
+         $_AccessToken = Invoke-RestMethod "$LoginUrl/$($TenantID)/oauth2/v2.0/token" -Body $body -ContentType "application/x-www-form-urlencoded" -Method Post
          if ($ErrorVar) {
                Write-Error "Error when getting access token using client credentials: $ErrorVar"
          }
