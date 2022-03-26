@@ -19,9 +19,16 @@ Test-Configuration $Config -ErrorAction Stop
 Import-Module .\HelperFunctions.psm1 -DisableNameChecking -Force -Verbose:$VerbosePreference
 Import-Module .\AuthenticationMethods\MSI.psm1 -Force -Verbose:$VerbosePreference
 Import-Module .\AuthenticationMethods\ClientCredentials.psm1 -Force -Verbose:$VerbosePreference
+
 Import-Module ActiveDirectory -Verbose:$VerbosePreference
 
-$graphEndpoints = Initialize-GraphEnvironment -Environment $config.Environment
+$graphEnvironment = $config.Environment
+if ($graphEnvironment -eq $null)
+{
+    $graphEnvironment = "AzureCloud"
+}
+
+$graphEndpoints = Initialize-GraphEnvironment -Environment $graphEnvironment
 
 # Get access token
 $AccessToken = $null
