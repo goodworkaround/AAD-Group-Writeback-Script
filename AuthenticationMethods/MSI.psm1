@@ -10,7 +10,12 @@ function Get-MSIMSGraphAccessToken
 {
     [CmdletBinding()]
     [OutputType([string])]
-    Param()
+    Param(
+         # The resource for which to acquire a token.
+        [Parameter()]
+        [ValidateNotNull()]
+        [string] $GraphUrl
+    )
 
     Begin
     {
@@ -19,7 +24,9 @@ function Get-MSIMSGraphAccessToken
     {
         try {
             $ErrorVar = $null
-            $_AccessToken = Invoke-RestMethod 'http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://graph.microsoft.com/' -Headers @{Metadata = "true"} -Verbose:$false -ErrorVariable "ErrorVar"
+            $url = "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=$GraphUrl"
+            Write-Verbose $url
+            $_AccessToken = Invoke-RestMethod $url -Headers @{Metadata = "true"} -Verbose:$false -ErrorVariable "ErrorVar"
             if($ErrorVar) {
                 Write-Error "Error when getting MSI access token: $ErrorVar"
             } else {
