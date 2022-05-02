@@ -31,7 +31,11 @@ function Get-ClientCredentialsMSGraphAccessToken {
         [Parameter(Mandatory = $true,
             Position = 3)]
         [ValidateNotNull()]
-        [string] $LoginUrl
+        [string] $LoginUrl,
+
+        [Parameter()]
+        [ValidateNotNull()]
+        [string] $GraphUrl
     )
 
     Begin {
@@ -46,7 +50,7 @@ function Get-ClientCredentialsMSGraphAccessToken {
    #Create request body
    $body = @{
        client_id     = $ClientID
-       scope         = "$LoginUrl/.default"
+       scope         = "$GraphUrl/.default"
        client_secret = $Credential.GetNetworkCredential().Password
    
        #There different grant_types see here

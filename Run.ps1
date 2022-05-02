@@ -35,7 +35,7 @@ $AccessToken = $null
 if($Config.AuthenticationMethod -eq "MSI") {
     $AccessToken = Get-MSIMSGraphAccessToken -GraphUrl $graphEndpoints.GraphUrl -Verbose:$VerbosePreference
 } elseif($Config.AuthenticationMethod -eq "ClientCredentials") {
-    $AccessToken = Get-ClientCredentialsMSGraphAccessToken -ClientID $Config.ClientID -EncryptedSecret $Config.EncryptedSecret -TenantID $Config.TenantID -LoginUrl $graphEndpoints.LoginUrl -Verbose:$VerbosePreference
+    $AccessToken = Get-ClientCredentialsMSGraphAccessToken -ClientID $Config.ClientID -EncryptedSecret $Config.EncryptedSecret -TenantID $Config.TenantID -LoginUrl $graphEndpoints.LoginUrl -GraphUrl $graphEndpoints.GraphUrl -Verbose:$VerbosePreference
 } else {
     Write-Error "Unknown value for AuthenticationMethod: $($Config.AuthenticationMethod)" -ErrorAction Stop
 }

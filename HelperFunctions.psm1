@@ -383,15 +383,15 @@ function Initialize-GraphEnvironment
         'AzureCloud'
         {
             @{
-                GraphUrl = "https://graph.microsoft.com/"
-                LoginUrl = "https://login.microsoftonline.com/"      
+                GraphUrl = "https://graph.microsoft.com"
+                LoginUrl = "https://login.microsoftonline.com"      
             }
         }
         'AzureUSGovernment'
         {
             @{
-                GraphUrl = "https://graph.microsoft.us/"
-                LoginUrl = "https://login.microsoftonline.us/"      
+                GraphUrl = "https://graph.microsoft.us"
+                LoginUrl = "https://login.microsoftonline.us"      
             }   
         }
         default
