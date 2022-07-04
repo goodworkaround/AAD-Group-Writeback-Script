@@ -100,22 +100,24 @@ function Save-ADGroup {
 
         if(!$ADGroupMap.Contains($AADGroup.id)) {
             Write-Verbose "  - Creating group '$($AADGroup.displayName)' in AD"
-            $ADGroupMap[$AADGroup.id] = New-ADGroup -Name $ADGroupName -DisplayName $ADGroupName -GroupScope Global -GroupCategory Security -Path $DestinationOU -OtherAttributes @{"$($ADGroupObjectIDAttribute)" = $AADGroup.id} -PassThru | Get-ADGroup -Properties members,$ADGroupObjectIDAttribute,displayName,name
-        } else {
+            $NewGroup =  New-ADGroup -Name $ADGroupName -DisplayName $ADGroupName -GroupScope Global -GroupCategory Security -Path $DestinationOU -OtherAttributes @{"$($ADGroupObjectIDAttribute)" = $AADGroup.id } -PassThru
+            $ADGroupMap[$AADGroup.id] = Get-ADGroup -Identity $NewGroup.SID -Properties members, $ADGroupObjectIDAttribute, displayName, name
+        }
+        else {
             $ADGroup = $ADGroupMap[$AADGroup.id]
             if($ADGroupName -ne $ADGroup.displayName) {
                 Write-Verbose "  - Fixing displayname of AD group: '$($ADGroup.DisplayName)' -> $($ADGroupName)"
-                $ADGroup | Set-ADGroup -DisplayName $ADGroupName
+                Set-ADGroup -DisplayName $ADGroupName -Identity $ADGroup.SID
             }
 
             if($ADGroupName -ne $ADGroup.name) {
                 Write-Verbose "  - Fixing name of AD group: '$($ADGroup.name)' -> $($ADGroupName)"
-                $ADGroup | Rename-ADObject -NewName $ADGroupName
+                Rename-ADObject -NewName $ADGroupName -Identity $ADGroup.SID
             }
 
-            if($ADGroup.GroupCategory -ne 'Security' -or $ADGroup.GroupScope -ne 'Global') {
+            if ($ADGroup.GroupCategory -ne 'Security' -or $ADGroup.GroupScope -ne 'Global') {
                 Write-Verbose "  - Changing group scope and category to global security"
-                $ADGroup | Set-ADGroup -GroupScope Global -GroupCategory Security
+                Set-ADGroup -GroupScope Global -GroupCategory Security -Identity $ADGroup.SID
             }
         }
     }
