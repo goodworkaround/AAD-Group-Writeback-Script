@@ -69,7 +69,8 @@ The following can be useful if you have multple Azure ADs or limitations in scop
 | AADGroupScopingConfig       | 2         | Additional info required to determine groups (filter etc.)  | id eq '<objectid>'                  |
 | GroupDeprovisioningMethod   | Yes       | Determines what to do when source AAD group is deleted      | Delete / ConvertToDistributionGroup / PrintWarning / DoNothing |
 | ADGroupNamePattern          | No        | Format string for AD group name, {0} = displayName from AAD, {1} = objectId from AAD, {2} = mailNickname from AAD | {0} ({1}) |
-| Environment			| No        | Azure Environment (default to AzurePublic)                  | AzureCloud / AzureUSGovernment	    |
+| Environment                 | No        | Azure Environment (default to AzurePublic)                  | AzureCloud / AzureUSGovernment	    |
+| TransitiveMembers           | No        | Retrieves a flat list of members from all child groups of the AAD group | true                    |
 
 1. If AuthenticationMethod is ClientCredentials
 2. If AADGroupScopingMethod is GroupMemberOfGroup or AADGroupScopingConfig

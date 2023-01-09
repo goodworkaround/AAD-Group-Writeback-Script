@@ -22,18 +22,24 @@ function Get-GraphRequestRecursive {
         [Parameter(Mandatory = $true,
             ValueFromPipeline = $true,
             Position = 1)]
-        [String] $Url
+        [String] $Url,
+
+        # Graph headers
+        [Parameter(Mandatory = $false,
+            Position = 2)]
+        [Hashtable] $AdditionalHeaders = @{}
     )
- 
+
     Write-Debug "Fetching url $Url"
-    $Result = Invoke-RestMethod $Url -Headers @{Authorization = "Bearer $AccessToken" } -Verbose:$false
+    $Headers = @{Authorization = "Bearer $AccessToken" } + $AdditionalHeaders
+    $Result = Invoke-RestMethod $Url -Headers $Headers -Verbose:$false
     if ($Result.value) {
         $Result.value
     }
 
     # Calls itself when there is a nextlink, in order to get next page
     if ($Result.'@odata.nextLink') {
-        Get-GraphRequestRecursive -Url $Result.'@odata.nextLink' -AccessToken $AccessToken
+        Get-GraphRequestRecursive -Url $Result.'@odata.nextLink' -AccessToken $AccessToken -AdditionalHeaders $AdditionalHeaders
     }
 }
 

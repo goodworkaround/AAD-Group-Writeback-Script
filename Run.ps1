@@ -95,8 +95,12 @@ $ErrorActionPreference = "Continue" # No need to fail hard anymore. This reduces
 Write-Verbose "Processing all memberships"
 Foreach($ScopedGroup in $ScopedGroups) {
     Write-Verbose " - Processing group '$($ScopedGroup.displayName)' ($($ScopedGroup.id))"
-    $Members = Get-GraphRequestRecursive -Url "$($graphEndpoints.GraphUrl)/v1.0/groups/$($ScopedGroup.id)/members?`$select=id,userType,displayName,userPrincipalName,onPremisesDistinguishedName,onPremisesImmutableId" -AccessToken $AccessToken
-    
+    if ($Config.TransitiveMembers -eq 'true') {
+        $Members = Get-GraphRequestRecursive -Url "$($graphEndpoints.GraphUrl)/v1.0/groups/$($ScopedGroup.id)/transitiveMembers/microsoft.graph.user?`$count=true&`$select=id,userType,displayName,userPrincipalName,onPremisesDistinguishedName,onPremisesImmutableId" -AccessToken $AccessToken -AdditionalHeaders @{ConsistencyLevel = 'eventual' }
+    } else {
+        $Members = Get-GraphRequestRecursive -Url "$($graphEndpoints.GraphUrl)/v1.0/groups/$($ScopedGroup.id)/members?`$select=id,userType,displayName,userPrincipalName,onPremisesDistinguishedName,onPremisesImmutableId" -AccessToken $AccessToken
+    }
+
     # Get all onPremisesDistinguishedName values from AAD, which should be our correct list
     $ExpectedADMembers = $Members | 
         Where-Object onPremisesDistinguishedName | 
