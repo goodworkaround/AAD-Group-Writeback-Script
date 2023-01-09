@@ -9,18 +9,18 @@ Param
     $ConfigFile = ".\Run.config"
 )
 
-# Read configuration
-$ErrorActionPreference = "Stop"
-$Config = Get-Content -path $ConfigFile | ConvertFrom-Json
-# Check configuration
-Test-Configuration $Config -ErrorAction Stop
-
 # Import modules
 Import-Module .\HelperFunctions.psm1 -DisableNameChecking -Force -Verbose:$VerbosePreference
 Import-Module .\AuthenticationMethods\MSI.psm1 -Force -Verbose:$VerbosePreference
 Import-Module .\AuthenticationMethods\ClientCredentials.psm1 -Force -Verbose:$VerbosePreference
 
 Import-Module ActiveDirectory -Verbose:$VerbosePreference
+
+# Read configuration
+$ErrorActionPreference = "Stop"
+$Config = Get-Content -path $ConfigFile | ConvertFrom-Json
+# Check configuration
+Test-Configuration $Config -ErrorAction Stop
 
 $graphEnvironment = $config.Environment
 if ($graphEnvironment -eq $null)
