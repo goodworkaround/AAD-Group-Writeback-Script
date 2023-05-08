@@ -144,7 +144,7 @@ if($Measure.count -gt 0) {
         Write-Verbose "Starting deletion of groups"
         $ADGroupsForDeletion | ForEach-Object {
             Write-Verbose " - Deleting AD group: $($_.DistinguishedName)"
-            $_ | Remove-ADGroup -Confirm:$false -WhatIf:$WhatIfPreference
+            Remove-ADGroup -Confirm:$false -Identity $_.SID -WhatIf:$WhatIfPreference
         }
     } elseif($Config.GroupDeprovisioningMethod -eq "PrintWarning") {
         Write-Verbose "Print group deletions as warnings"
@@ -155,7 +155,7 @@ if($Measure.count -gt 0) {
         Write-Verbose "Converting AD groups that should be deleted, to distribution groups"
         $ADGroupsForDeletion | ForEach-Object {
             Write-Verbose " - Converting AD group: $($_.DistinguishedName)"
-            $_ | Set-ADGroup -GroupCategory Distribution -WhatIf:$WhatIfPreference
+            Set-ADGroup -GroupCategory Distribution -Identity $_.SID -WhatIf:$WhatIfPreference
         }
     } else {
         Write-Verbose "There are $($ADGroupsForDeletion.count) groups that should be delete. Set GroupDeprovisioningMethod to 'Delete', 'PrintWarning' or 'ConvertToDistributionGroup' in order to enable deprovisioning."
