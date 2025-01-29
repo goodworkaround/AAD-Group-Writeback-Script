@@ -43,44 +43,45 @@ function Get-ClientCredentialsMSGraphAccessToken {
     Process {
         
 
-      try {
+        try {
 
-       $Credential = [PSCredential]::new($ClientID, (ConvertTo-SecureString $EncryptedSecret))
+            $Credential = [PSCredential]::new($ClientID, (ConvertTo-SecureString $EncryptedSecret))
 
-   #Create request body
-   $body = @{
-       client_id     = $ClientID
-       scope         = "$GraphUrl/.default"
-       client_secret = $Credential.GetNetworkCredential().Password
+            #Create request body
+            $body = @{
+                client_id     = $ClientID
+                scope         = "$GraphUrl/.default"
+                client_secret = $Credential.GetNetworkCredential().Password
    
-       #There different grant_types see here
-       grant_type    = "client_credentials"
-   }
+                #There different grant_types see here
+                grant_type    = "client_credentials"
+            }
 
 
-         $ErrorVar = $null
-         $_AccessToken = Invoke-RestMethod "$LoginUrl/$($TenantID)/oauth2/v2.0/token" -Body $body -ContentType "application/x-www-form-urlencoded" -Method Post
-         if ($ErrorVar) {
-               Write-Error "Error when getting access token using client credentials: $ErrorVar"
-         }
-         else {
-               Write-Debug "Got access token: $($_AccessToken.access_token)"
-               return $_AccessToken.access_token
-         }
-      }
-      catch {
-         if($_ -like "*Key not valid for use in specified state*") {
-            Write-Error "Error when decrypting client secret. Perhaps it was generated on another computer or as another user? Please use the below code to create a new secret: 
+            $ErrorVar = $null
+            $_AccessToken = Invoke-RestMethod "$LoginUrl/$($TenantID)/oauth2/v2.0/token" -Body $body -ContentType "application/x-www-form-urlencoded" -Method Post
+            if ($ErrorVar) {
+                Write-Error "Error when getting access token using client credentials: $ErrorVar"
+            }
+            else {
+                Write-Debug "Got access token: $($_AccessToken.access_token)"
+                return $_AccessToken.access_token
+            }
+        }
+        catch {
+            if ($_ -like "*Key not valid for use in specified state*") {
+                Write-Error "Error when decrypting client secret. Perhaps it was generated on another computer or as another user? Please use the below code to create a new secret: 
             
             `$r = read-host -assecurestring -prompt 'Type your client secret'
             `$r | convertfrom-securestring | set-clipboard
 
             "
             
-         } else {
-            Write-Error "Error when getting access token using client credentials" -Exception $_
-         }
-      }
+            }
+            else {
+                Write-Error "Error when getting access token using client credentials" -Exception $_
+            }
+        }
     }
     End {
     }
