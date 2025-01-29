@@ -13,7 +13,7 @@ function Get-ClientCertificateMSGraphAccessToken {
     [OutputType([string])]
     Param
     (
-        # AD attribute used for anchoring, will contain the objectid from Azure AD
+        # AD attribute used for anchoring, will contain the objectid from Entra ID
         [Parameter(Mandatory = $true,
             Position = 0)]
         [string] $ClientID,
@@ -23,7 +23,7 @@ function Get-ClientCertificateMSGraphAccessToken {
             Position = 1)]
         [string] $Thumbprint,
 
-        # AD attribute used for anchoring, will contain the objectid from Azure AD
+        # AD attribute used for anchoring, will contain the objectid from Entra ID
         [Parameter(Mandatory = $true,
             Position = 2)]
         [string] $TenantID,
