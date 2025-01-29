@@ -404,4 +404,125 @@ function Initialize-GraphEnvironment
     return [pscustomobject]$graphEnvironmentTemplate
 }
 
-Export-ModuleMember "Get-GraphRequestRecursive", "Save-ADGroup", "ConvertFrom-Base64JWT", "Test-Configuration", "Get-ADGroupForDeprovisioning", "Initialize-GraphEnvironment"
+<#
+.Synopsis
+    Creates a base64 string of a default JWT header, with certificate information
+.DESCRIPTION
+    Creates a base64 string of a default JWT header, with certificate information
+.EXAMPLE
+    Get-AppendedSignature -InputString "base64header.base64payload" -Kid "https://kv.vault.azure.net/keys/abc/xxx" -KeyVaultHeaders @{...}
+#>
+function Get-AppendedSignature {
+    [CmdletBinding()]
+ 
+    param (
+        [Parameter(Mandatory = $true)] [String] $InputString,
+ 
+        [Parameter(Mandatory = $true)] [System.Security.Cryptography.X509Certificates.X509Certificate2] $Certificate
+    )
+ 
+    Process {
+        # Hash it with SHA-256:
+        $hasher = [System.Security.Cryptography.HashAlgorithm]::Create('sha256')
+        $hash = $hasher.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($InputString))
+         
+        # Use certificate to sign hash
+        $signature = $Certificate.PrivateKey.SignHash($hash, 'SHA256', [System.Security.Cryptography.RSASignaturePadding]::Pkcs1)
+         
+        # Create full JWT with the signature we got from KeyVault (just append .SIGNATURE)
+        return $InputString + "." + [System.Convert]::ToBase64String($signature)
+    }
+}
+
+<#
+.Synopsis
+    Creates a base64 string of a default JWT header, with certificate information
+.DESCRIPTION
+    Creates a base64 string of a default JWT header, with certificate information
+.EXAMPLE
+    Get-JWTHeader -Certificate $cert
+#>
+function Get-JWTHeader {
+    [CmdletBinding()]
+ 
+    param (
+        [Parameter(Mandatory = $true)] $Certificate
+    ) 
+ 
+    Process {
+        [System.Convert]::ToBase64String(([System.Text.Encoding]::UTF8.GetBytes((
+                        [ordered] @{
+                            "alg" = "RS256"
+                            "kid" = $Certificate.Thumbprint
+                            "x5t" = (([System.Convert]::ToBase64String($Certificate.GetCertHash())) -replace '\+','-' -replace '/','_' -replace '=')
+                            "typ" = "JWT"
+                        } | ConvertTo-Json -Compress
+                    )))) -replace "=+$" # Required to remove padding
+    }
+}
+
+<#
+.Synopsis
+    Creates a signed JWT of the Payload
+.DESCRIPTION
+    Creates a signed JWT of the Payload
+.EXAMPLE
+    Get-SignedJWT -Payload @{sub="abc"} -Certificate $cert
+#>
+function Get-SignedJWT {
+    [CmdletBinding()]
+ 
+    param (
+        [Parameter(Mandatory = $true)] [System.Collections.Hashtable] $Payload,
+ 
+        [Parameter(Mandatory = $true)] $Certificate,
+ 
+        [Parameter(Mandatory = $false)] [Boolean] $DoNotAddJtiClaim = $false
+    )
+ 
+    Process {
+        # Build our JWT header
+        $JWTHeader = Get-JWTHeader -Certificate $certificate
+ 
+        # Set EXP to unixtime
+        if (!$Payload.ContainsKey("exp")) {
+            $Payload["exp"] = [int] (Get-Date(Get-Date).AddHours(1).ToUniversalTime()-uformat "%s") # Unixtime + 3600
+        }
+        elseif ($Payload["exp"].GetType().Name -eq "DateTime") {
+            $Payload["exp"] = [int] (Get-Date($Payload["exp"]).ToUniversalTime()-uformat "%s") # Unixtime
+        }
+        else {
+            $Payload["exp"] = [int] (Get-Date(Get-Date).AddHours(1).ToUniversalTime()-uformat "%s") # Unixtime + 3600
+        }
+ 
+        # Set EXP to unixtime
+        if (!$Payload.ContainsKey("nbf")) {
+            $Payload["nbf"] = [int] (Get-Date(Get-Date).ToUniversalTime()-uformat "%s") # Unixtime
+        }
+        elseif ($Payload["nbf"].GetType().Name -eq "DateTime") {
+            $Payload["nbf"] = [int] (Get-Date($Payload["nbf"]).ToUniversalTime()-uformat "%s") # Unixtime
+        }
+        else {
+            $Payload["nbf"] = [int] (Get-Date(Get-Date).ToUniversalTime()-uformat "%s") # Unixtime
+        }
+ 
+        # Add jti if missing
+        if (!$Payload.ContainsKey("jti") -and !$DoNotAddJtiClaim) {
+            $Payload["jti"] = [guid]::NewGuid().ToString()
+        }
+ 
+        # Add iat
+        $Payload["iat"] = [int] (Get-Date(Get-Date).ToUniversalTime()-uformat "%s") # Unixtime
+         
+        # Build our JWT Payload
+        $JWTPayload = $Payload | ConvertTo-Json -Depth 5 -Compress
+         
+        # Create JWT without signature (base64 of header DOT base64 of payload)
+        function ConvertTo-Base64($String) { [System.Convert]::ToBase64String(([System.Text.Encoding]::UTF8.GetBytes($String))) }
+        $JWTWithoutSignature = $JWTHeader + "." + ((ConvertTo-Base64 $JWTPayload) -replace "=+$")
+         
+        Get-AppendedSignature -InputString $JWTWithoutSignature -Certificate $Certificate
+    }
+}
+
+Export-ModuleMember "Get-GraphRequestRecursive", "Save-ADGroup", "ConvertFrom-Base64JWT", "Test-Configuration", "Get-ADGroupForDeprovisioning", "Initialize-GraphEnvironment","Get-AppendedSignature","Get-JWTHeader", "Get-SignedJWT"
