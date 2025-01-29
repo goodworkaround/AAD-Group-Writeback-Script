@@ -13,7 +13,7 @@ function Get-ClientCredentialsMSGraphAccessToken {
     [OutputType([string])]
     Param
     (
-        # AD attribute used for anchoring, will contain the objectid from Azure AD
+        # AD attribute used for anchoring, will contain the objectid from Entra ID
         [Parameter(Mandatory = $true,
             Position = 0)]
         [string] $ClientID,
@@ -23,7 +23,7 @@ function Get-ClientCredentialsMSGraphAccessToken {
             Position = 1)]
         [string] $EncryptedSecret,
 
-        # AD attribute used for anchoring, will contain the objectid from Azure AD
+        # AD attribute used for anchoring, will contain the objectid from Entra ID
         [Parameter(Mandatory = $true,
             Position = 2)]
         [string] $TenantID,

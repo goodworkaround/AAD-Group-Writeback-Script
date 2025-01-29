@@ -134,7 +134,7 @@ Foreach ($ScopedGroup in $ScopedGroups) {
             }
         }
         
-        # Find members from Azure AD, that is not in AD, and add them
+        # Find members from Entra ID, that is not in AD, and add them
         $ExpectedADMembers |
         Where-Object { $_ -notin $ADGroup.Members } |
         ForEach-Object {

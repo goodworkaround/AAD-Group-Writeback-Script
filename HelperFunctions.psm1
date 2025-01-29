@@ -41,9 +41,9 @@ function Get-GraphRequestRecursive {
 
 <#
 .Synopsis
-   The function takes an array of Azure AD groups as input and ensures that they are created in AD
+   The function takes an array of Entra ID groups as input and ensures that they are created in AD
 .DESCRIPTION
-   The function takes an array of Azure AD groups as input and ensures that they are created in AD
+   The function takes an array of Entra ID groups as input and ensures that they are created in AD
 .EXAMPLE
    $ScopedGroups | Save-ADGroup -ADGroupObjectIDAttribute $Config.ADGroupObjectIDAttribute -DestinationOU $Config.DestinationOU
 #>
@@ -52,7 +52,7 @@ function Save-ADGroup {
     [OutputType([System.Collections.Hashtable])]
     Param
     (
-        # AD attribute used for anchoring, will contain the objectid from Azure AD
+        # AD attribute used for anchoring, will contain the objectid from Entra ID
         [Parameter(Mandatory = $true,
             Position = 0)]
         [string] $ADGroupObjectIDAttribute,
@@ -67,7 +67,7 @@ function Save-ADGroup {
             Position = 2)]
         [string] $ADGroupNamePattern = "{0} ({1})",
 
-        # The pipeline input object, an Azure AD group
+        # The pipeline input object, an Entra ID group
         [Parameter(Mandatory = $true,
             ValueFromPipeline = $true,
             Position = 3)]
@@ -352,7 +352,7 @@ function Get-ADGroupForDeprovisioning {
                 } elseif($GroupDeprovisioningMethod -eq "ConvertToDistributionGroup" -and $_.GroupCategory -eq "Distribution") {
                     Write-Debug "Ignoring group '$($_.DistinguishedName)' because it is a distribution list, and GroupDeprovisioningMethod is 'ConvertToDistributionGroup'"
                 } elseif (!$_AADGroupsMap.ContainsKey($_.$ADGroupObjectIDAttribute)){
-                    Write-Verbose " - adding group '$($_.DistinguishedName)' to delete list because it does not exist in Azure AD"
+                    Write-Verbose " - adding group '$($_.DistinguishedName)' to delete list because it does not exist in Entra ID"
                     $_
                 }
             }

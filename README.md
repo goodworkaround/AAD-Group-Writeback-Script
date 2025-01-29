@@ -6,22 +6,22 @@ This repository contains a script that can take certain groups in an Azure Activ
 
 ## Use cases
 
-- Use the Azure AD Privileged Groups functionality to control AD group memberships with Azure AD Privileged Identity Management (PIM), effectively being a replacement for MIM PAM
-- Use the Azure AD dynamic group functionality to dynamically assign group memberships in AD
-- Use the Azure AD Entitlement Management functionality to enable users to request access packages that provides AD group memberships
+- Use the Entra ID Privileged Groups functionality to control AD group memberships with Entra ID Privileged Identity Management (PIM), effectively being a replacement for MIM PAM
+- Use the Entra ID dynamic group functionality to dynamically assign group memberships in AD
+- Use the Entra ID Entitlement Management functionality to enable users to request access packages that provides AD group memberships
 - Use the Microsoft 365 Groups functionality to delegate group management, writing these groups back to AD to provide functionlity
 
 ## Setup
 
-- Make sure that you are running Azure AD Connect 1.1.553.0 or newer (it came out in 2017, so shame on you if you are not)
+- Make sure that you are running Entra ID Connect 1.1.553.0 or newer (it came out in 2017, so shame on you if you are not)
 - Download or clone this repository into a folder on one of your servers
-  - Because this script will handle groups that have high privilege, you should put this script on a "Tier 0" type server, such as a domain controller og your Azure AD Connect server.
+  - Because this script will handle groups that have high privilege, you should put this script on a "Tier 0" type server, such as a domain controller og your Entra ID Connect server.
 - Install the Active Directory PowerShell module 
 
 ```
 Install-WindowsFeature RSAT-AD-PowerShell
 ```
-- Configure authentication (See section 'Authenticating to Azure AD')
+- Configure authentication (See section 'Authenticating to Entra ID')
   - I would recommend running this on the server, as the user that will be running the script on a scheduled task.
 - Define all configuration parameters (See section 'Configuration' or example configurations)
 - Run the Run.ps1 file as per the section 'Invocation', with -WhatIf:$true
@@ -49,7 +49,7 @@ Run.config will be used.
 
 ### Multiple config files
 
-The following can be useful if you have multple Azure ADs or limitations in scoping. Remember that the script should then have one destionation OU per config file in order for deletion to work properly.
+The following can be useful if you have multple Entra IDs or limitations in scoping. Remember that the script should then have one destionation OU per config file in order for deletion to work properly.
 
 ```
 "Tenant1.config","Tenant2.config","Tenant3.config" | .\Run.ps1 -Verbose
@@ -57,13 +57,14 @@ The following can be useful if you have multple Azure ADs or limitations in scop
 
 ## Configuration
 
-| Configuration option        | Required? | Description                                                 | Valid values                        |
-| --------------------------- | --------- | ----------------------------------------------------------- | ----------------------------------- |
-| AuthenticationMethod        | Yes       |                                                             | MSI / ClientCredentials             |
-| ClientID                    | 1         | The clientid used for the Client Credential Grant           | A guid                              |
-| EncryptedSecret             | 1         | The client secret used for the Client Credential Grant      | Any string                          |
-| TenantID                    | 1         | The tenantid used for the Client Credential Grant           | A guid                              |
-| DestinationOU               | Yes       | The OU where groups will be created                         | OU=Groups,DC=contoso,DC=com         |
+| Configuration option        | Required? | Description                                                 | Valid values                                |
+| --------------------------- | --------- | ----------------------------------------------------------- | ------------------------------------------- |
+| AuthenticationMethod        | Yes       |                                                             | MSI / ClientCredentials / ClientCertificate |
+| ClientID                    | 1         | The clientid used for the Client Credential Grant           | A guid                                      |
+| EncryptedSecret             | 1         | The client secret used for the Client Credential Grant      | Any string                                  |
+| TenantID                    | 1         | The tenantid used for the Client Credential Grant           | A guid                                      |
+| Thumbprint                  | 3         | The Thumbprint of an installed certificate used for client certificate authentication | A certificate thumbprint | 
+| DestinationOU               | Yes       | The OU where groups will be created                         | OU=Groups,DC=contoso,DC=com                 |
 | ADGroupObjectIDAttribute    | Yes       | The AD attribute for source anchor (objectid of AAD group)  | A string attribute in AD (info, description, extensionAttribute1, etc) |
 | AADGroupScopingMethod       | Yes       | The method of determining which AAD groups to sync          | Filter / GroupMemberOfGroup / PrivilegedGroups |
 | AADGroupScopingConfig       | 2         | Additional info required to determine groups (filter etc.)  | id eq '<objectid>'                  |
@@ -73,6 +74,7 @@ The following can be useful if you have multple Azure ADs or limitations in scop
 
 1. If AuthenticationMethod is ClientCredentials
 2. If AADGroupScopingMethod is GroupMemberOfGroup or AADGroupScopingConfig
+3. If AuthenticationMethod is ClientCertificate
 
 ### Example configurations
 
@@ -80,17 +82,18 @@ The configuration file is a JSON based, and contains a dictionary with key-value
 
 | File | Description |
 | - | - |
-| Example1.config | Using client credentials to authenticate to Azure AD, writing all privileged groups back to AD. If groups are deleted from Azure AD, a list of warnings are printed. |
-| Example2.config | Using Managed Service Identity to authenticate to Azure AD, writing a filtered list of groups back to AD. If groups are deleted from Azure AD, the AD group will be converted to a distribution group (which does not give any access, and is an effective disable method). |
-| Example3.config | Using Managed Service Identity to authenticate to Azure AD, writing all groups that are member of the group '5f7ab793-e722-435a-a8bf-ac48a3f7361e' back to AD. If groups are deleted from Azure AD, the AD group will be deleted. |
+| Example1.config | Using client credentials to authenticate to Entra ID, writing all privileged groups back to AD. If groups are deleted from Entra ID, a list of warnings are printed. |
+| Example2.config | Using Managed Service Identity to authenticate to Entra ID, writing a filtered list of groups back to AD. If groups are deleted from Entra ID, the AD group will be converted to a distribution group (which does not give any access, and is an effective disable method). |
+| Example3.config | Using Managed Service Identity to authenticate to Entra ID, writing all groups that are member of the group '5f7ab793-e722-435a-a8bf-ac48a3f7361e' back to AD. If groups are deleted from Entra ID, the AD group will be deleted. |
+| Example4.config | Using certificate authenticate to Entra ID, writing all groups that are member of the group '5f7ab793-e722-435a-a8bf-ac48a3f7361e' back to AD. If groups are deleted from Entra ID, the AD group will be deleted. |
 
-## Authenticating to Azure AD
+## Authenticating to Entra ID
 
-There are two supported methods to authenticate to Azure AD - MSI and Client Credentials.
+There are two supported methods to authenticate to Entra ID - MSI and Client Credentials.
 
 ### Managed Service Identity (MSI)
 
-If you are running the write-back script on a virtual machine in Azure, that is running in a subscription that is connected to your Azure AD tenant, you simples option is to enable MSI for your VM. 
+If you are running the write-back script on a virtual machine in Azure, that is running in a subscription that is connected to your Entra ID tenant, you simples option is to enable MSI for your VM. 
 
 1. On your Virtual Machine in Azure, find "Identity" and enable System Assigned Managed Identity
 
@@ -117,7 +120,7 @@ Now, in your config file, set AuthenticationMethod to "MSI". No need to provide 
 
 If you cannot use MSI, this is the way to go.
 
-1. Register an app registration in your tenant using Azure AD PowerShell Module (You can change the app name)
+1. Register an app registration in your tenant using Entra ID PowerShell Module (You can change the app name)
 
 Make sure to run this in the context of the same user, as the same computer you will be running the write-back script on. This is due to the secure string handling :)
 
