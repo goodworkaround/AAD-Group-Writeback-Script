@@ -427,7 +427,12 @@ function Get-AppendedSignature {
         $hash = $hasher.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($InputString))
          
         # Use certificate to sign hash
-        $signature = $Certificate.PrivateKey.SignHash($hash, 'SHA256', [System.Security.Cryptography.RSASignaturePadding]::Pkcs1)
+        if($Certificate.PrivateKey) {
+            $signature = $Certificate.PrivateKey.SignHash($hash, 'SHA256', [System.Security.Cryptography.RSASignaturePadding]::Pkcs1)
+        } else {
+            $key = [System.Security.Cryptography.X509Certificates.RSACertificateExtensions]::GetRSAPrivateKey($Certificate)
+            $signature = $key.SignHash($hash, 'SHA256', [System.Security.Cryptography.RSASignaturePadding]::Pkcs1)
+        }
          
         # Create full JWT with the signature we got from KeyVault (just append .SIGNATURE)
         return $InputString + "." + [System.Convert]::ToBase64String($signature)
@@ -486,24 +491,24 @@ function Get-SignedJWT {
  
         # Set EXP to unixtime
         if (!$Payload.ContainsKey("exp")) {
-            $Payload["exp"] = [int] (Get-Date(Get-Date).AddHours(1).ToUniversalTime()-uformat "%s") # Unixtime + 3600
+            $Payload["exp"] = [int] ((Get-Date).AddHours(1).ToUniversalTime() - [datetime]'1970-01-01T00:00:00Z').TotalSeconds # Unixtime + 3600
         }
         elseif ($Payload["exp"].GetType().Name -eq "DateTime") {
-            $Payload["exp"] = [int] (Get-Date($Payload["exp"]).ToUniversalTime()-uformat "%s") # Unixtime
+            $Payload["exp"] = [int] ((Get-Date($Payload["exp"]).ToUniversalTime() - [datetime]'1970-01-01T00:00:00Z').TotalSeconds) # Unixtime
         }
         else {
-            $Payload["exp"] = [int] (Get-Date(Get-Date).AddHours(1).ToUniversalTime()-uformat "%s") # Unixtime + 3600
+            $Payload["exp"] = [int] ((Get-Date).AddHours(1).ToUniversalTime() - [datetime]'1970-01-01T00:00:00Z').TotalSeconds # Unixtime + 3600
         }
  
         # Set EXP to unixtime
         if (!$Payload.ContainsKey("nbf")) {
-            $Payload["nbf"] = [int] (Get-Date(Get-Date).ToUniversalTime()-uformat "%s") # Unixtime
+            $Payload["nbf"] = [int] ((Get-Date).ToUniversalTime() - [datetime]'1970-01-01T00:00:00Z').TotalSeconds # Unixtime
         }
         elseif ($Payload["nbf"].GetType().Name -eq "DateTime") {
-            $Payload["nbf"] = [int] (Get-Date($Payload["nbf"]).ToUniversalTime()-uformat "%s") # Unixtime
+            $Payload["nbf"] = [int] (Get-Date($Payload["nbf"]).ToUniversalTime()  - [datetime]'1970-01-01T00:00:00Z') # Unixtime
         }
         else {
-            $Payload["nbf"] = [int] (Get-Date(Get-Date).ToUniversalTime()-uformat "%s") # Unixtime
+            $Payload["nbf"] = [int] ((Get-Date).ToUniversalTime() - [datetime]'1970-01-01T00:00:00Z').TotalSeconds # Unixtime
         }
  
         # Add jti if missing
@@ -512,7 +517,7 @@ function Get-SignedJWT {
         }
  
         # Add iat
-        $Payload["iat"] = [int] (Get-Date(Get-Date).ToUniversalTime()-uformat "%s") # Unixtime
+        $Payload["iat"] = [int] ((Get-Date).ToUniversalTime() - [datetime]'1970-01-01T00:00:00Z').TotalSeconds # Unixtime
          
         # Build our JWT Payload
         $JWTPayload = $Payload | ConvertTo-Json -Depth 5 -Compress
