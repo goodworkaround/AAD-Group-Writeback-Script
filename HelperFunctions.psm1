@@ -427,7 +427,12 @@ function Get-AppendedSignature {
         $hash = $hasher.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($InputString))
          
         # Use certificate to sign hash
-        $signature = $Certificate.PrivateKey.SignHash($hash, 'SHA256', [System.Security.Cryptography.RSASignaturePadding]::Pkcs1)
+        if($Certificate.PrivateKey) {
+            $signature = $Certificate.PrivateKey.SignHash($hash, 'SHA256', [System.Security.Cryptography.RSASignaturePadding]::Pkcs1)
+        } else {
+            $key = [System.Security.Cryptography.X509Certificates.RSACertificateExtensions]::GetRSAPrivateKey($Certificate)
+            $signature = $key.SignHash($hash, 'SHA256', [System.Security.Cryptography.RSASignaturePadding]::Pkcs1)
+        }
          
         # Create full JWT with the signature we got from KeyVault (just append .SIGNATURE)
         return $InputString + "." + [System.Convert]::ToBase64String($signature)
